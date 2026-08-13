@@ -45,3 +45,7 @@ client/android/keystore.properties
 # Playwright
 test-results/
 playwright-report/
+# Dev server runtime files
+*.pid
+dev-server*.log
+dev-vite*.log
