@@ -1,0 +1,21 @@
+{
+  "name": "@shuangchenyue/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "霜晨月前后端共享类型与校验 schema（唯一事实来源）",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.48.0"
+  }
+}

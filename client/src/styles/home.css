@@ -1,0 +1,325 @@
+.home-layout {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+  padding: 30px 60px;
+  gap: 120px;
+}
+
+.home-feed {
+  flex: 1;
+  min-width: 0;
+  max-width: 520px;
+}
+
+.home-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 30px;
+  align-self: flex-start;
+}
+
+.recommend-card {
+  background: transparent;
+}
+
+.recommend-header {
+  padding-bottom: 16px;
+  margin-bottom: 12px;
+}
+
+.recommend-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.recommend-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.recommend-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.recommend-username {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.recommend-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+.recommend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recommend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.recommend-item.removing {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.recommend-item-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  transition: opacity 0.15s;
+}
+
+.recommend-item-link:hover {
+  opacity: 0.7;
+}
+
+.recommend-follow-btn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  background: #4260EA;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.recommend-follow-btn:hover {
+  background: #3A4BD7;
+}
+
+.recommend-item-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.recommend-item-avatar-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.recommend-item-info {
+  min-width: 0;
+}
+
+.recommend-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recommend-item-id {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.recommend-empty {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 16px 0;
+}
+
+@media (max-width: 768px) {
+  .home-layout {
+    flex-direction: column;
+    padding: 16px;
+    gap: 0;
+  }
+
+  .home-feed {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .home-sidebar {
+    display: none;
+  }
+}
+
+/* Pull-to-refresh: finger-following indicator */
+.home-pull-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Progress circle (shown during pull, hidden during refresh) */
+.home-pull-progress {
+  display: block;
+}
+
+.home-pull-indicator.refreshing .home-pull-progress {
+  display: none;
+}
+
+/* Spinner (hidden during pull, shown during refresh) */
+.home-pull-spinner {
+  display: none;
+  width: 26px;
+  height: 26px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: pull-spin 0.7s linear infinite;
+}
+
+.home-pull-indicator.refreshing .home-pull-spinner {
+  display: block;
+}
+
+@keyframes pull-spin {
+  to { transform: rotate(360deg); }
+}
+
+.home-icp {
+  text-align: center;
+  padding: 20px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.home-icp:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.icp-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  padding: 4px 0 30px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.icp-item:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.police-icon {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+}
+
+/* Web端 APP 下载胶囊按钮 */
+.home-download-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 20px;
+  background: var(--bg-frosted);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 21px;
+  text-decoration: none;
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.5s ease;
+  z-index: 50;
+  animation: music-player-in 0.3s ease;
+}
+
+.home-download-btn-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.home-download-text {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.home-download-icon-mobile {
+  display: none;
+}
+
+.home-download-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .home-download-btn {
+    bottom: calc(80px + var(--safe-area-bottom));
+    left: 16px;
+    right: auto;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    gap: 0;
+    justify-content: center;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .home-download-icon-desktop,
+  .home-download-text {
+    display: none;
+  }
+
+  .home-download-icon-mobile {
+    display: block;
+  }
+}

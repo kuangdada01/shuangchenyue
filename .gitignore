@@ -1,0 +1,47 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+
+# Server
+server/mimo.db
+server/mimo.db-shm
+server/mimo.db-wal
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Client
+client/dist/
+client/tsconfig.tsbuildinfo
+client/android/.gradle/
+client/android/build/
+client/android/local.properties
+client/android/app/build/
+client/android/capacitor-cordova-android-plugins
+client/android/app/src/main/assets/public
+client/android/app/src/main/assets/capacitor.config.json
+client/android/app/src/main/assets/capacitor.plugins.json
+client/android/app/src/main/res/xml/config.xml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Claude local settings
+.claude/settings.local.json
+.claude/deploy_fix.py
+
+# Music files (large & potential copyright)
+client/public/music/
+
+# Android keystore
+client/android/keystore.properties
+*.keystore
+
+# Playwright
+test-results/
+playwright-report/

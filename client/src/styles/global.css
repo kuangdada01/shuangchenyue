@@ -1,0 +1,239 @@
+@font-face {
+  font-family: 'MiSans';
+  src: url('../assets/fonts/MiSans-Regular.subset.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MiSans';
+  src: url('../assets/fonts/MiSans-Semibold.subset.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #ffffff;
+  --bg-hover: #f5f5f5;
+  --border-color: #dbdbdb;
+  --text-primary: #262626;
+  --text-secondary: #8e8e8e;
+  --accent: #0095f6;
+  --accent-hover: #1877f2;
+  --danger: #ed4956;
+  --success: #18a058;
+  --sidebar-width-collapsed: 72px;
+  --sidebar-width-expanded: 244px;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+
+  /* 扩展变量：输入框、按钮、标签等 */
+  --bg-input: #F3F5F7;
+  --bg-input-hover: #e5e7eb;
+  --bg-btn-secondary: rgb(240, 242, 245);
+  --bg-btn-secondary-hover: rgb(220, 222, 225);
+  --bg-tag-admin: #e8f0fe;
+  --text-tag-admin: #1a73e8;
+  --bg-danger-light: #fee2e2;
+  --bg-frosted: rgba(255, 255, 255, 0.5);
+  --shadow-dropdown: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 暗色模式变量覆盖 */
+[data-theme="dark"] {
+  --bg-primary: #0f0f0f;
+  --bg-secondary: #1a1a1a;
+  --bg-hover: #2a2a2a;
+  --border-color: #333333;
+  --text-primary: #e5e5e5;
+  --text-secondary: #888888;
+  --accent: #0095f6;
+  --accent-hover: #1877f2;
+  --danger: #ed4956;
+  --success: #18a058;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --bg-input: #2a2a2a;
+  --bg-input-hover: #333333;
+  --bg-btn-secondary: #2a2a2a;
+  --bg-btn-secondary-hover: #333333;
+  --bg-tag-admin: rgba(66, 96, 234, 0.2);
+  --text-tag-admin: #8ab4f8;
+  --bg-danger-light: rgba(237, 73, 86, 0.15);
+  --bg-frosted: rgba(15, 15, 15, 0.8);
+  --shadow-dropdown: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'MiSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: 16px;
+  color: inherit;
+}
+
+button, a {
+  touch-action: manipulation;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  color: inherit;
+}
+
+input, textarea {
+  font-family: inherit;
+}
+
+img {
+  max-width: 100%;
+}
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+}
+
+.main-content {
+  margin-left: var(--sidebar-width-collapsed);
+  flex: 1;
+  min-height: 100vh;
+  padding: 0;
+}
+
+/* 移动端通用页面滚动容器：body 不再滚动，各页面自身用此类滚动 */
+.page-scroll {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ============================================================
+   移动端滚动架构（根治底部导航栏跟随移动 + 私信滑不动）
+   ------------------------------------------------------------
+   关键：桌面端 body 作为滚动容器，Android WebView 上
+   position:fixed 元素在 body 惯性滚动期间会跟随移动。
+   移动端把滚动从 body 下放到各页面内部容器：html/body/#root
+   锁定高度且 overflow:hidden，body 不再滚动，
+   .main-content 也固定高度，页面内容由内部容器滚动。
+   ============================================================ */
+@media (max-width: 768px) {
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .app-layout {
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+    /* 底部留出导航栏 + 安全区空间 */
+    padding-bottom: calc(64px + var(--safe-area-bottom));
+  }
+
+  /* 移动端页面容器：不限高，由 .main-content 滚动 */
+  /* 注: .home-layout 已迁移至 HomePage.module.css（含等价宽度重置规则） */
+  .admin-page,
+  .profile-container,
+  .announcement-page,
+  .search-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* 隐藏所有滚动条（仅 Android App 端；网页端保留正常滚动条） */
+html.native-app body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html.native-app,
+html.native-app #root {
+  -ms-overflow-style: none;
+  scrollbar-width: none !important;
+  background-color: var(--bg-primary);
+}
+
+html.native-app::-webkit-scrollbar,
+html.native-app::-webkit-scrollbar-track,
+html.native-app::-webkit-scrollbar-thumb,
+html.native-app::-webkit-scrollbar-corner,
+html.native-app body::-webkit-scrollbar,
+html.native-app body::-webkit-scrollbar-track,
+html.native-app body::-webkit-scrollbar-thumb,
+html.native-app body::-webkit-scrollbar-corner,
+html.native-app #root::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+html.native-app *,
+html.native-app *::before,
+html.native-app *::after {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html.native-app *::-webkit-scrollbar,
+html.native-app *::-webkit-scrollbar-track,
+html.native-app *::-webkit-scrollbar-thumb,
+html.native-app *::-webkit-scrollbar-corner {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}

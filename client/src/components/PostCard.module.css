@@ -1,0 +1,240 @@
+/* 帖子卡片（原 post.css 的 post-card 系列规则） */
+
+.card {
+  background: var(--bg-primary);
+  border: none;
+  border-radius: var(--radius);
+  max-width: 470px;
+  margin: 0 auto 30px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 3px 0 10px;
+}
+
+.avatar {
+  width: 39px;
+  height: 39px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-hover);
+  vertical-align: middle;
+}
+
+.username {
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.caption {
+  padding: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.captionUsername {
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.timeDot {
+  font-size: 18px;
+  color: var(--text-secondary);
+  margin: 0 -6px;
+  line-height: 1;
+}
+
+.timeInline {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 -4px;
+  line-height: 1;
+}
+
+.followBtn {
+  margin-left: auto;
+  padding: 6px 0;
+  width: 58px;
+  text-align: center;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #4260EA;
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.followBtn:hover {
+  background: #3A4BD7;
+}
+
+.followBtn.following {
+  background: var(--bg-btn-secondary);
+  color: var(--text-primary);
+}
+
+.followBtn.following:hover {
+  background: var(--bg-btn-secondary-hover);
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.imageCarousel {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.imageCarousel::-webkit-scrollbar {
+  display: none;
+}
+
+.image {
+  width: 100%;
+  height: auto;
+  flex-shrink: 0;
+  display: block;
+  object-fit: contain;
+  background: #000;
+  scroll-snap-align: start;
+}
+
+.videoWrapper {
+  position: relative;
+  width: 100%;
+  background: #000;
+}
+
+.video {
+  width: 100%;
+  max-height: 600px;
+  object-fit: contain;
+  display: block;
+  transition: opacity 0.3s ease;
+}
+
+.videoCover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.imageDots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  z-index: 2;
+}
+
+.imageDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.imageDot.active {
+  background: white;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 4px;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .actionBtn:hover {
+    opacity: 0.6;
+  }
+}
+
+.actionBtn.liked {
+  color: var(--danger);
+}
+
+/* 转发态修饰类（原实现无专属规则，仅作状态标识） */
+.reposted {}
+
+.actionCount {
+  font-size: 14px;
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+.actionBtn.liked svg {
+  fill: var(--danger) !important;
+  stroke: var(--danger) !important;
+}
+
+/* Share tooltip */
+.shareTooltip {
+  position: relative;
+}
+
+.shareTooltipText {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text-primary);
+  color: white;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  animation: postCardFadeInOut 1.5s ease-in-out;
+}
+
+@keyframes postCardFadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}

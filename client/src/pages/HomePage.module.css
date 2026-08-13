@@ -1,0 +1,80 @@
+/* 首页布局与下拉刷新（原 home.css 的 home-layout/feed/sidebar/pull 规则） */
+
+.layout {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+  padding: 30px 60px;
+  gap: 120px;
+}
+
+.feed {
+  flex: 1;
+  min-width: 0;
+  max-width: 520px;
+}
+
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 30px;
+  align-self: flex-start;
+}
+
+@media (max-width: 768px) {
+  .layout {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    flex-direction: column;
+    padding: 16px;
+    gap: 0;
+  }
+
+  .feed {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .sidebar {
+    display: none;
+  }
+}
+
+/* Pull-to-refresh: finger-following indicator */
+.pullIndicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Progress circle (shown during pull, hidden during refresh) */
+.pullProgress {
+  display: block;
+}
+
+.pullIndicator.refreshing .pullProgress {
+  display: none;
+}
+
+/* Spinner (hidden during pull, shown during refresh) */
+.pullSpinner {
+  display: none;
+  width: 26px;
+  height: 26px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: homePullSpin 0.7s linear infinite;
+}
+
+.pullIndicator.refreshing .pullSpinner {
+  display: block;
+}
+
+@keyframes homePullSpin {
+  to { transform: rotate(360deg); }
+}

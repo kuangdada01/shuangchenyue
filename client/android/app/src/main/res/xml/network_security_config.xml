@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow cleartext traffic to production server for API requests -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">YOUR_SERVER_IP_HERE</domain>
+    </domain-config>
+</network-security-config>
