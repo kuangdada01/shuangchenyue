@@ -152,6 +152,11 @@
 }
 
 .gridItem img {
+  /* 绝对定位填充：img 不参与布局，格子高度完全由 aspect-ratio: 1 决定，
+     16:9 等宽图在拖拽/重排动画中也不会把格子撑成长方形 */
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
