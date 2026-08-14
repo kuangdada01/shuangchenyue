@@ -14,6 +14,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { postsFeedKey } from '../hooks/usePostsFeed';
 import { Users, FileText, Megaphone, Trash2, Key, Send, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { showToast } from '../components/ui/Toast';
@@ -43,6 +45,7 @@ interface AdminAnnouncement {
 
 export default function AdminPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('users');
 
@@ -131,6 +134,10 @@ export default function AdminPage() {
       try {
         await api.delete(`/admin/posts/${p.id}`);
         setPosts(prev => prev.filter(x => x.id !== p.id));
+        // 同步前台信息流缓存，删除后立即生效
+        queryClient.setQueryData(postsFeedKey, (prev: unknown[] | undefined) =>
+          prev ? prev.filter(x => (x as { id: number }).id !== p.id) : prev
+        );
         showToast('帖子已删除');
       } catch { showToast('删除失败'); }
     });

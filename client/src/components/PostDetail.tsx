@@ -29,6 +29,8 @@ import api from '../api';
 import { Post, Comment } from '../types';
 import { computeInitialCollapsedIds, buildVisibleComments } from '../lib/comments';
 import { useAuth } from '../context/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { postsFeedKey } from '../hooks/usePostsFeed';
 import { useFollow, useLike, useBookmark, useRepost } from '../state/cache';
 import { useFollowUser } from '../hooks/useFollowUser';
 import { useLikePost } from '../hooks/useLikePost';
@@ -56,6 +58,7 @@ interface PostDetailProps {
 
 export default function PostDetail({ postId, onClose, onLikeChange, onCommentChange, highlightCommentId, noAnimation }: PostDetailProps) {
   const { user, openLoginPrompt } = useAuth();
+  const queryClient = useQueryClient();
   const { getFollowStatus, setFollowStatus } = useFollow();
   const { getLikeInfo } = useLike();
   const { getBookmarked } = useBookmark();
@@ -245,6 +248,10 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
     try {
       await api.delete(`/posts/${post.id}`);
       showToast('帖子已删除');
+      // 同步移除信息流缓存，删除后立即生效（staleTime: Infinity 不会自动重取）
+      queryClient.setQueryData(postsFeedKey, (prev: Post[] | undefined) =>
+        prev ? prev.filter(p => p.id !== post.id) : prev
+      );
       handleClose();
     } catch {}
     setShowDeletePostConfirm(false);
