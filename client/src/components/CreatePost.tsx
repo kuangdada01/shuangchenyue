@@ -286,7 +286,7 @@ export default function CreatePost() {
             const src = imagePreviews[i];
             return (
               <div
-                key={imagePreviews[i]}
+                key={`${imagePreviews[i]}-${i}`}
                 ref={el => { gridRefs.current[i] = el; }}
                 className={[
                   composer.gridItem,
