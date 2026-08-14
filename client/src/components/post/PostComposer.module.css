@@ -155,7 +155,7 @@
    注意：不做放大（grid 容器 overflow:hidden 会裁掉放大后的边缘，
    导致边缘图片被遮住），仅用阴影 + 层级作为拖拽反馈 */
 .dragging {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.3);
   z-index: 3;
 }
 
