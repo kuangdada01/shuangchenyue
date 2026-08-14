@@ -17,8 +17,9 @@ import { useNavigate } from 'react-router-dom';
 import { X, Search } from 'lucide-react';
 import api from '../api';
 import { useFollow } from '../state/cache';
-import { showToast } from './Toast';
+import { showToast } from './ui/Toast';
 import Avatar from './Avatar';
+import styles from './FollowersModal.module.css';
 
 interface UserItem {
   id: number;
@@ -103,60 +104,60 @@ export default function FollowersModal({ type, userId, onClose }: FollowersModal
     : users;
 
   return (
-    <div className={`post-detail-overlay ${closing ? 'closing' : ''}`} onClick={handleClose}>
+    <div className={`${styles.overlay} ${closing ? styles.closing : ''}`} onClick={handleClose}>
       <div
-        className={`followers-modal ${closing ? 'closing' : ''}`}
+        className={`${styles.modal} ${closing ? styles.closing : ''}`}
         onClick={e => e.stopPropagation()}
       >
-        <div className="followers-modal-header">
-          <h3 className="followers-modal-title">{title}</h3>
-          <button className="followers-modal-close" data-back onClick={handleClose}>
+        <div className={styles.header}>
+          <h3 className={styles.title}>{title}</h3>
+          <button className={styles.close} data-back onClick={handleClose}>
             <X size={20} />
           </button>
         </div>
 
-        <div className="followers-modal-search">
-          <Search size={16} className="followers-modal-search-icon" />
+        <div className={styles.search}>
+          <Search size={16} className={styles.searchIcon} />
           <input
             ref={searchInputRef}
-            className="followers-modal-search-input"
+            className={styles.searchInput}
             placeholder="搜索用户名"
             value={searchKeyword}
             onChange={e => setSearchKeyword(e.target.value)}
           />
         </div>
 
-        <div className="followers-modal-list">
+        <div className={styles.list}>
           {loading ? (
-            <div className="followers-modal-empty">加载中...</div>
+            <div className={styles.empty}>加载中...</div>
           ) : filteredUsers.length === 0 ? (
-            <div className="followers-modal-empty">
+            <div className={styles.empty}>
               {searchKeyword.trim() ? '未找到相关用户' : (type === 'followers' ? '暂无粉丝' : '暂无关注')}
             </div>
           ) : (
             filteredUsers.map(user => (
               <div
                 key={user.id}
-                className="followers-modal-item"
+                className={styles.item}
                 onClick={() => handleUserClick(user.id)}
               >
                 <Avatar src={user.avatar} username={user.username} size={40} />
-                <div className="followers-modal-item-info">
-                  <div className="followers-modal-item-name">{user.username}</div>
+                <div className={styles.itemInfo}>
+                  <div className={styles.itemName}>{user.username}</div>
                   {user.bio && (
-                    <div className="followers-modal-item-bio">{user.bio}</div>
+                    <div className={styles.itemBio}>{user.bio}</div>
                   )}
                 </div>
                 {user.is_following ? (
                   <button
-                    className="followers-modal-btn following"
+                    className={`${styles.btn} ${styles.following}`}
                     onClick={e => { e.stopPropagation(); handleUnfollow(user.id); }}
                   >
                     已关注
                   </button>
                 ) : (
                   <button
-                    className="followers-modal-btn"
+                    className={styles.btn}
                     onClick={e => { e.stopPropagation(); handleFollow(user.id); }}
                   >
                     关注

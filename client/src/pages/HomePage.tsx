@@ -13,7 +13,7 @@
  * ============================================================
  */
 
-import { useState, useEffect, useLayoutEffect, useRef, Suspense, lazy } from 'react';
+import { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -28,7 +28,7 @@ import IcpFooter from '../components/IcpFooter';
 import EmptyState from '../components/ui/EmptyState';
 import { useFollow } from '../state/cache';
 import { events } from '../state/events';
-import { showToast } from '../components/Toast';
+import { showToast } from '../components/ui/Toast';
 import { usePostsFeed, postsFeedKey } from '../hooks/usePostsFeed';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 import { usePullToRefresh, PULL_CIRCUMFERENCE } from '../hooks/usePullToRefresh';
@@ -66,14 +66,6 @@ export default function HomePage() {
   const [skipOverlayAnim, setSkipOverlayAnim] = useState(() => !!sessionStorage.getItem('reopenPostId'));
   const [profileUserId, setProfileUserId] = useState<number | null>(null);
   const [showDownloadBtn, setShowDownloadBtn] = useState(true);
-
-  // overlay 打开时同步锁定 body 滚动（在浏览器绘制前）
-  useLayoutEffect(() => {
-    if (overlayPostId) {
-      document.body.style.overflow = 'hidden';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [overlayPostId]);
 
   // Save scroll position continuously while on homepage
   useEffect(() => {
@@ -170,7 +162,6 @@ export default function HomePage() {
 
   const handlePostClose = () => {
     setOverlayPostId(null);
-    document.body.style.overflow = '';
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const st = loadPersistedScrollY();

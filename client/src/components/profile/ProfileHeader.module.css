@@ -272,6 +272,8 @@
   background: var(--bg-primary);
   cursor: pointer;
 }
+
+@media (max-width: 768px) {
   .logout {
     display: flex;
     position: absolute;
@@ -333,3 +335,4 @@
   .stats {
     justify-content: center;
   }
+}

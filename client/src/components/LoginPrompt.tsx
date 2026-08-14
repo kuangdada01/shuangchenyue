@@ -10,7 +10,7 @@
  * - 注册: 用户名 + 邮箱验证码 + 密码
  * - 忘记密码: 邮箱验证码 + 新密码
  * - 支持 ESC 键关闭 / 点击遮罩关闭 / X 按钮关闭
- * - fadeIn/scaleIn 动画（复用 post.css 的 keyframes）
+ * - fadeIn/scaleIn 动画（由 LoginPrompt.module.css 的 keyframes 提供）
  * ============================================================
  */
 
@@ -19,8 +19,6 @@ import { Send, Loader2, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
 import styles from './LoginPrompt.module.css';
-import '../styles/post.css';
-import '../styles/auth.css';
 
 interface LoginPromptProps {
   onClose: () => void;
@@ -196,21 +194,21 @@ export default function LoginPrompt({ onClose }: LoginPromptProps) {
         className={`${styles.modal}${closing ? ` ${styles.closing}` : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="login-prompt-close" data-back onClick={handleClose}>
+        <button className={styles.close} data-back onClick={handleClose}>
           <X size={18} />
         </button>
 
-        <h1 className="auth-logo login-prompt-logo">霜晨月</h1>
-        <p className="auth-subtitle login-prompt-subtitle">
+        <h1 className={styles.authLogo}>霜晨月</h1>
+        <p className={styles.authSubtitle}>
           {mode === 'login' ? '分享你的精彩瞬间' : mode === 'register' ? '注册后查看朋友的精彩内容' : '重置密码'}
         </p>
 
         {mode === 'login' ? (
-          <form className="auth-form" onSubmit={handleLogin}>
-            {error && <div className="auth-error">{error}</div>}
-            {success && <div className="auth-success">{success}</div>}
+          <form className={styles.form} onSubmit={handleLogin}>
+            {error && <div className={styles.error}>{error}</div>}
+            {success && <div className={styles.success}>{success}</div>}
             <input
-              className="auth-input"
+              className={styles.input}
               type="email"
               placeholder="邮箱"
               value={email}
@@ -218,37 +216,37 @@ export default function LoginPrompt({ onClose }: LoginPromptProps) {
               required
             />
             <input
-              className="auth-input"
+              className={styles.input}
               type="password"
               placeholder="密码"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
             />
-            <button className="auth-button" type="submit" disabled={loading}>
+            <button className={styles.button} type="submit" disabled={loading}>
               {loading ? '登录中...' : '登录'}
             </button>
-            <div className="auth-actions-row">
-              <button type="button" className="auth-register-link" onClick={() => switchMode('register')}>注册</button>
-              <div className="auth-forgot-row">
-                <button type="button" className="auth-forgot-link" onClick={() => switchMode('forgot')}>忘记密码？</button>
+            <div className={styles.actionsRow}>
+              <button type="button" className={styles.registerLink} onClick={() => switchMode('register')}>注册</button>
+              <div className={styles.forgotRow}>
+                <button type="button" className={styles.forgotLink} onClick={() => switchMode('forgot')}>忘记密码？</button>
               </div>
             </div>
           </form>
         ) : mode === 'register' ? (
-          <form className="auth-form" onSubmit={handleRegister}>
-            {error && <div className="auth-error">{error}</div>}
+          <form className={styles.form} onSubmit={handleRegister}>
+            {error && <div className={styles.error}>{error}</div>}
             <input
-              className="auth-input"
+              className={styles.input}
               type="text"
               placeholder="用户名"
               value={username}
               onChange={e => setUsername(e.target.value)}
               required
             />
-            <div className="auth-email-row">
+            <div className={styles.emailRow}>
               <input
-                className="auth-input"
+                className={styles.input}
                 type="email"
                 placeholder="邮箱"
                 value={email}
@@ -257,16 +255,16 @@ export default function LoginPrompt({ onClose }: LoginPromptProps) {
               />
               <button
                 type="button"
-                className="auth-send-btn"
+                className={styles.sendBtn}
                 onClick={handleSendCode}
                 disabled={sending || countdown > 0}
                 title={countdown > 0 ? `${countdown}秒后可重发` : '发送验证码'}
               >
-                {sending ? <Loader2 size={14} className="spin" /> : countdown > 0 ? <span className="auth-countdown">{countdown}</span> : <Send size={14} />}
+                {sending ? <Loader2 size={14} className={styles.spin} /> : countdown > 0 ? <span className={styles.countdown}>{countdown}</span> : <Send size={14} />}
               </button>
             </div>
             <input
-              className="auth-input"
+              className={styles.input}
               type="password"
               placeholder="密码"
               value={password}
@@ -274,7 +272,7 @@ export default function LoginPrompt({ onClose }: LoginPromptProps) {
               required
             />
             <input
-              className="auth-input"
+              className={styles.input}
               type="password"
               placeholder="确认密码"
               value={confirmPassword}
@@ -282,7 +280,7 @@ export default function LoginPrompt({ onClose }: LoginPromptProps) {
               required
             />
             <input
-              className="auth-input"
+              className={styles.input}
               type="text"
               placeholder="验证码"
               value={code}
@@ -290,19 +288,19 @@ export default function LoginPrompt({ onClose }: LoginPromptProps) {
               maxLength={6}
               required
             />
-            <button className="auth-button" type="submit" disabled={loading}>
+            <button className={styles.button} type="submit" disabled={loading}>
               {loading ? '注册中...' : '注册'}
             </button>
-            <div className="auth-link">
-              已有账号？ <button type="button" className="auth-link-btn" onClick={() => switchMode('login')}>返回登录</button>
+            <div className={styles.link}>
+              已有账号？ <button type="button" className={styles.linkBtn} onClick={() => switchMode('login')}>返回登录</button>
             </div>
           </form>
         ) : (
-          <form className="auth-form" onSubmit={handleResetPassword}>
-            {error && <div className="auth-error">{error}</div>}
-            <div className="auth-email-row">
+          <form className={styles.form} onSubmit={handleResetPassword}>
+            {error && <div className={styles.error}>{error}</div>}
+            <div className={styles.emailRow}>
               <input
-                className="auth-input"
+                className={styles.input}
                 type="email"
                 placeholder="邮箱"
                 value={email}
@@ -311,16 +309,16 @@ export default function LoginPrompt({ onClose }: LoginPromptProps) {
               />
               <button
                 type="button"
-                className="auth-send-btn"
+                className={styles.sendBtn}
                 onClick={handleSendCode}
                 disabled={sending || countdown > 0}
                 title={countdown > 0 ? `${countdown}秒后可重发` : '发送验证码'}
               >
-                {sending ? <Loader2 size={14} className="spin" /> : countdown > 0 ? <span className="auth-countdown">{countdown}</span> : <Send size={14} />}
+                {sending ? <Loader2 size={14} className={styles.spin} /> : countdown > 0 ? <span className={styles.countdown}>{countdown}</span> : <Send size={14} />}
               </button>
             </div>
             <input
-              className="auth-input"
+              className={styles.input}
               type="text"
               placeholder="验证码"
               value={code}
@@ -329,7 +327,7 @@ export default function LoginPrompt({ onClose }: LoginPromptProps) {
               required
             />
             <input
-              className="auth-input"
+              className={styles.input}
               type="password"
               placeholder="新密码"
               value={password}
@@ -337,18 +335,18 @@ export default function LoginPrompt({ onClose }: LoginPromptProps) {
               required
             />
             <input
-              className="auth-input"
+              className={styles.input}
               type="password"
               placeholder="确认新密码"
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
               required
             />
-            <button className="auth-button" type="submit" disabled={loading}>
+            <button className={styles.button} type="submit" disabled={loading}>
               {loading ? '重置中...' : '重置密码'}
             </button>
-            <div className="auth-link">
-              想起密码了？ <button type="button" className="auth-link-btn" onClick={() => switchMode('login')}>返回登录</button>
+            <div className={styles.link}>
+              想起密码了？ <button type="button" className={styles.linkBtn} onClick={() => switchMode('login')}>返回登录</button>
             </div>
           </form>
         )}

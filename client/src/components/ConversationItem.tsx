@@ -27,7 +27,7 @@ export default function ConversationItem({ conv, active, onClick }: Conversation
       <Avatar src={conv.avatar} username={conv.username} size={44} className={styles.avatar} />
       <div className={styles.info}>
         <div className={styles.username}>{conv.username}</div>
-        <div className={styles.preview}>{conv.last_message}</div>
+        <div className={styles.preview}>{conv.last_message || '[图片]'}</div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
         <span className={styles.time}>{formatLastMessageTime(conv.last_message_at)}</span>

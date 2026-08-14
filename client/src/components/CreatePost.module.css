@@ -169,6 +169,8 @@
   min-width: 36px;
   text-align: right;
 }
+
+@media (max-width: 768px) {
   .coverLayout {
     flex-direction: column;
   }
@@ -190,3 +192,4 @@
     padding: 16px;
     flex-shrink: 0;
   }
+}

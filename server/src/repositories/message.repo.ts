@@ -37,7 +37,10 @@ export function listConversations(userId: number): ConversationRow[] {
       partner_id,
       u.username,
       u.avatar,
-      (SELECT content FROM messages m2
+      (SELECT CASE
+        WHEN m2.image_url IS NOT NULL AND m2.image_url != '' AND m2.content = '' THEN '[图片]'
+        ELSE m2.content END
+       FROM messages m2
        WHERE (m2.sender_id = ? AND m2.receiver_id = partner_id)
           OR (m2.sender_id = partner_id AND m2.receiver_id = ?)
        ORDER BY m2.created_at DESC LIMIT 1) as last_message,

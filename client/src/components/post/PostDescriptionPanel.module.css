@@ -142,6 +142,8 @@
 .toggle.on .toggleKnob {
   transform: translateX(20px);
 }
+
+@media (max-width: 768px) {
   .editRight {
     width: 100%;
     border-left: none;
@@ -152,3 +154,4 @@
   .textarea {
     min-height: 100px;
   }
+}

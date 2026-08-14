@@ -112,10 +112,13 @@
   font-weight: 300;
   margin-bottom: 8px;
 }
+
+@media (max-width: 768px) {
   .grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 2px;
   }
+}
 /* Profile Tabs */
 .tabs {
   display: flex;

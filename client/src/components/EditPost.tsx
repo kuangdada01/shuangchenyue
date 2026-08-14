@@ -16,13 +16,14 @@ import { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } fr
 import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronUp, X, ImagePlus } from 'lucide-react';
 import EmojiPicker from './EmojiPicker';
-import ConfirmDialog from './ConfirmDialog';
+import ConfirmDialog from './ui/ConfirmDialog';
 import { useAuth } from '../context/AuthContext';
 import { useEvent } from '../context/CreateContext';
-import { showToast } from './Toast';
+import { showToast } from './ui/Toast';
 import api from '../api';
 import { resolveMediaUrl } from '../utils';
 import composer from './post/PostComposer.module.css';
+import panel from './post/PostDescriptionPanel.module.css';
 
 interface ImageItem {
   url: string;
@@ -507,25 +508,25 @@ export default function EditPost() {
               )}
             </div>
           </div>
-          <div className="create-edit-right">
-            <div className="create-edit-user">
+          <div className={panel.editRight}>
+            <div className={panel.user}>
               {user?.avatar ? (
-                <img src={resolveMediaUrl(user.avatar) || user.avatar} alt="" className="create-edit-avatar" />
+                <img src={resolveMediaUrl(user.avatar) || user.avatar} alt="" className={panel.avatar} />
               ) : (
-                <div className="create-edit-avatar-placeholder">{user?.username?.charAt(0).toUpperCase()}</div>
+                <div className={panel.avatarPlaceholder}>{user?.username?.charAt(0).toUpperCase()}</div>
               )}
-              <span className="create-edit-username">{user?.username}</span>
+              <span className={panel.username}>{user?.username}</span>
             </div>
-            <div className="create-edit-desc-wrapper">
+            <div className={panel.descWrapper}>
               <textarea
                 ref={textareaRef}
-                className="create-edit-textarea"
+                className={panel.textarea}
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 maxLength={2000}
                 autoFocus
               />
-              <div className="create-edit-desc-footer">
+              <div className={panel.descFooter}>
                 <EmojiPicker
                   onSelect={(emoji) => setDescription(prev => prev + emoji)}
                   onSelected={() => {
@@ -538,26 +539,26 @@ export default function EditPost() {
                   onOpen={() => textareaRef.current?.blur()}
                   onClose={() => textareaRef.current?.focus()}
                 />
-                <span className="create-edit-char-count">{description.length}/2000</span>
+                <span className={panel.charCount}>{description.length}/2000</span>
               </div>
             </div>
-            <div className="create-edit-advanced">
-              <button className="create-edit-advanced-toggle" onClick={() => setShowAdvanced(v => !v)}>
+            <div className={panel.advanced}>
+              <button className={panel.advancedToggle} onClick={() => setShowAdvanced(v => !v)}>
                 <span>高级设置</span>
                 {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
               {showAdvanced && (
-                <div className="create-edit-advanced-options">
-                  <label className="create-edit-toggle-label">
+                <div className={panel.advancedOptions}>
+                  <label className={panel.toggleLabel}>
                     <span>关闭评论</span>
-                    <div className={`create-edit-toggle ${closeComments ? 'on' : ''}`} onClick={() => setCloseComments(v => !v)}>
-                      <div className="create-edit-toggle-knob" />
+                    <div className={`${panel.toggle} ${closeComments ? panel.on : ''}`} onClick={() => setCloseComments(v => !v)}>
+                      <div className={panel.toggleKnob} />
                     </div>
                   </label>
-                  <label className="create-edit-toggle-label">
+                  <label className={panel.toggleLabel}>
                     <span>置顶</span>
-                    <div className={`create-edit-toggle ${pinned ? 'on' : ''}`} onClick={() => setPinned(v => !v)}>
-                      <div className="create-edit-toggle-knob" />
+                    <div className={`${panel.toggle} ${pinned ? panel.on : ''}`} onClick={() => setPinned(v => !v)}>
+                      <div className={panel.toggleKnob} />
                     </div>
                   </label>
                 </div>

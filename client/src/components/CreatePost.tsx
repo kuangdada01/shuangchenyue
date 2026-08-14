@@ -21,15 +21,16 @@ import { useState, useRef, useCallback, useEffect, useLayoutEffect, useMemo } fr
 import { createPortal } from 'react-dom';
 import { ImagePlus, Video, X, ChevronDown, ChevronUp } from 'lucide-react';
 import EmojiPicker from './EmojiPicker';
-import ConfirmDialog from './ConfirmDialog';
+import ConfirmDialog from './ui/ConfirmDialog';
 import { useAuth } from '../context/AuthContext';
 import { useEvent } from '../context/CreateContext';
 import { events } from '../state/events';
-import { showToast } from './Toast';
+import { showToast } from './ui/Toast';
 import api from '../api';
 import { resolveMediaUrl } from '../utils';
 import styles from './CreatePost.module.css';
 import composer from './post/PostComposer.module.css';
+import panel from './post/PostDescriptionPanel.module.css';
 
 export default function CreatePost() {
   const { user } = useAuth();
@@ -58,6 +59,7 @@ export default function CreatePost() {
   const [pinned, setPinned] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // 拖拽状态
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -400,7 +402,7 @@ export default function CreatePost() {
   };
 
   const confirmDiscard = () => {
-    setImageFiles([]); setImagePreviews([]); handleRemoveVideo(); setDescription(''); setStep(1);
+    setImageFiles([]); setImagePreviews([]); handleRemoveVideo(); setDescription(''); setCurrentImageIndex(0); setStep(1);
     setShowDiscardConfirm(false); handleClose();
   };
 
@@ -443,7 +445,7 @@ export default function CreatePost() {
 
   const handleContinue = () => {
     if (videoFile) setStep(2); // 视频跳转封面编辑
-    else if (imageFiles.length > 0) setStep(3); // 图片跳转描述编辑
+    else if (imageFiles.length > 0) { setCurrentImageIndex(0); setStep(3); } // 图片跳转描述编辑
   };
   const handleBack = () => {
     if (step === 2) setStep(1); // 从封面返回媒体选择
@@ -594,11 +596,13 @@ export default function CreatePost() {
           <div className={styles.coverLayout}>
             <div className={styles.coverLeft}>
               <div className={styles.coverPreview}>
-                {videoCoverPreview ? (
-                  <img src={videoCoverPreview} alt="封面预览" className={styles.coverImage} />
-                ) : (
-                  <div className={styles.coverPlaceholder}>封面预览</div>
-                )}
+                <video
+                  ref={videoRef}
+                  src={videoPreview || undefined}
+                  onLoadedMetadata={handleVideoLoaded}
+                  className={styles.coverVideo}
+                  controls
+                />
               </div>
             </div>
             <div className={styles.coverRight}>
@@ -612,16 +616,13 @@ export default function CreatePost() {
                   <ImagePlus size={18} />
                   从电脑选择
                 </button>
+                {videoCoverPreview && (
+                  <img src={videoCoverPreview} alt="封面预览" className={styles.coverImage} />
+                )}
                 <input ref={coverInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" style={{ display: 'none' }} onChange={handleCoverFileSelect} />
               </div>
               <div className={styles.coverSection}>
                 <div className={styles.coverSectionTitle}>或从视频截取</div>
-                <video
-                  ref={videoRef}
-                  src={videoPreview || undefined}
-                  onLoadedMetadata={handleVideoLoaded}
-                  style={{ display: 'none' }}
-                />
                 <canvas ref={canvasRef} style={{ display: 'none' }} />
                 <div className={styles.coverSliderRow}>
                   <input
@@ -669,37 +670,61 @@ export default function CreatePost() {
               <video src={videoPreview} controls className={composer.editVideo} />
             ) : (
               <>
-                <img src={imagePreviews[0]} alt="" className={composer.editImage} />
+                <img src={imagePreviews[currentImageIndex] ?? imagePreviews[0]} alt="" className={composer.editImage} />
                 {imagePreviews.length > 1 && (
-                  <div className={composer.editDots}>
-                    {imagePreviews.map((_, i) => (
-                      <span key={i} className={composer.editDot} />
-                    ))}
-                  </div>
+                  <>
+                    {currentImageIndex > 0 && (
+                      <button
+                        className={`${composer.editNav} ${composer.editPrev}`}
+                        onClick={() => setCurrentImageIndex(prev => prev - 1)}
+                        aria-label="上一张"
+                      >
+                        ‹
+                      </button>
+                    )}
+                    {currentImageIndex < imagePreviews.length - 1 && (
+                      <button
+                        className={`${composer.editNav} ${composer.editNext}`}
+                        onClick={() => setCurrentImageIndex(prev => prev + 1)}
+                        aria-label="下一张"
+                      >
+                        ›
+                      </button>
+                    )}
+                    <div className={composer.editDots}>
+                      {imagePreviews.map((_, i) => (
+                        <span
+                          key={i}
+                          className={`${composer.editDot} ${i === currentImageIndex ? composer.active : ''}`}
+                          onClick={() => setCurrentImageIndex(i)}
+                        />
+                      ))}
+                    </div>
+                  </>
                 )}
               </>
             )}
           </div>
         </div>
-        <div className="create-edit-right">
-          <div className="create-edit-user">
+        <div className={panel.editRight}>
+          <div className={panel.user}>
             {user?.avatar ? (
-              <img src={resolveMediaUrl(user.avatar) || user.avatar} alt="" className="create-edit-avatar" />
+              <img src={resolveMediaUrl(user.avatar) || user.avatar} alt="" className={panel.avatar} />
             ) : (
-              <div className="create-edit-avatar-placeholder">{user?.username?.charAt(0).toUpperCase()}</div>
+              <div className={panel.avatarPlaceholder}>{user?.username?.charAt(0).toUpperCase()}</div>
             )}
-            <span className="create-edit-username">{user?.username}</span>
+            <span className={panel.username}>{user?.username}</span>
           </div>
-          <div className="create-edit-desc-wrapper">
+          <div className={panel.descWrapper}>
             <textarea
               ref={textareaRef}
-              className="create-edit-textarea"
+              className={panel.textarea}
               value={description}
               onChange={e => setDescription(e.target.value)}
               maxLength={2000}
               autoFocus
             />
-            <div className="create-edit-desc-footer">
+            <div className={panel.descFooter}>
               <EmojiPicker
                 onSelect={(emoji) => setDescription(prev => prev + emoji)}
                 onSelected={() => {
@@ -712,26 +737,26 @@ export default function CreatePost() {
                 onOpen={() => textareaRef.current?.blur()}
                 onClose={() => textareaRef.current?.focus()}
               />
-              <span className="create-edit-char-count">{description.length}/2000</span>
+              <span className={panel.charCount}>{description.length}/2000</span>
             </div>
           </div>
-          <div className="create-edit-advanced">
-            <button className="create-edit-advanced-toggle" onClick={() => setShowAdvanced(v => !v)}>
+          <div className={panel.advanced}>
+            <button className={panel.advancedToggle} onClick={() => setShowAdvanced(v => !v)}>
               <span>高级设置</span>
               {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             {showAdvanced && (
-              <div className="create-edit-advanced-options">
-                <label className="create-edit-toggle-label">
+              <div className={panel.advancedOptions}>
+                <label className={panel.toggleLabel}>
                   <span>关闭评论</span>
-                  <div className={`create-edit-toggle ${closeComments ? 'on' : ''}`} onClick={() => setCloseComments(v => !v)}>
-                    <div className="create-edit-toggle-knob" />
+                  <div className={`${panel.toggle} ${closeComments ? panel.on : ''}`} onClick={() => setCloseComments(v => !v)}>
+                    <div className={panel.toggleKnob} />
                   </div>
                 </label>
-                <label className="create-edit-toggle-label">
+                <label className={panel.toggleLabel}>
                   <span>置顶</span>
-                  <div className={`create-edit-toggle ${pinned ? 'on' : ''}`} onClick={() => setPinned(v => !v)}>
-                    <div className="create-edit-toggle-knob" />
+                  <div className={`${panel.toggle} ${pinned ? panel.on : ''}`} onClick={() => setPinned(v => !v)}>
+                    <div className={panel.toggleKnob} />
                   </div>
                 </label>
               </div>

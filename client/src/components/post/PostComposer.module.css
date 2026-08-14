@@ -355,6 +355,8 @@
   max-height: 100%;
   object-fit: contain;
 }
+
+@media (max-width: 768px) {
   .overlay {
     align-items: flex-end;
   }
@@ -414,6 +416,7 @@
   .editImageWrapper {
     max-height: 35vh;
   }
+}
 
   
 

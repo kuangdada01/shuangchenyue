@@ -24,7 +24,7 @@ import CommentItem from './CommentItem';
 import PostMedia from './post/PostMedia';
 
 const LazyProfileOverlay = lazy(() => import('./ProfileOverlay'));
-import ConfirmDialog from './ConfirmDialog';
+import ConfirmDialog from './ui/ConfirmDialog';
 import api from '../api';
 import { Post, Comment } from '../types';
 import { computeInitialCollapsedIds, buildVisibleComments } from '../lib/comments';
@@ -99,7 +99,7 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
   const isNestedRef = useRef(false);
   // 注册/注销嵌套 PostDetail 实例，供外层 PostDetail 的返回键处理使用
   useEffect(() => {
-    // 挂载后检测：当前 overlay 是否在另一个 .post-detail-overlay 内部
+    // 挂载后检测：当前 overlay 是否在另一个 PostDetail overlay 内部
     requestAnimationFrame(() => {
       if (overlayRef.current) {
         const parentOverlay = overlayRef.current.parentElement?.closest(`.${styles.overlay}`);
@@ -401,8 +401,7 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
   const wheelHandlerRef = useRef<((e: WheelEvent) => void) | null>(null);
 
   useEffect(() => {
-    // Lock body scroll to prevent background page scrolling while overlay is open
-    document.body.style.overflow = 'hidden';
+    // 不锁定 body 滚动（保持滚动条始终可见）；仅拦截滚轮防止穿透滚动背景
 
     // 用 document 级别的 capture 阶段监听 wheel 事件
     // 在浏览器处理滚动默认动作之前拦截，确保 e.preventDefault() 有效
@@ -429,7 +428,6 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
         document.removeEventListener('wheel', wheelHandlerRef.current, { capture: true });
         wheelHandlerRef.current = null;
       }
-      document.body.style.overflow = '';
     };
   }, []);
 
@@ -475,7 +473,7 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
 
   if (loadError) {
     return (
-      <div ref={overlayRef} className={`post-detail-overlay ${closing ? 'closing' : ''}`} onClick={handleClose}>
+      <div ref={overlayRef} className={`${styles.overlay} ${closing ? styles.closing : ''}`} onClick={handleClose}>
         <div className={styles.container} onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
             <p style={{ fontSize: 16, marginBottom: 12 }}>该帖子已被删除</p>
@@ -627,6 +625,7 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
                     onReply={(c) => {
                       if (!user) { openLoginPrompt(); return; }
                       setReplyingTo({ id: c.id, username: c.username });
+                      commentInputRef.current?.focus();
                     }}
                     onToggleReplies={toggleReplies}
                     onLike={handleCommentLike}

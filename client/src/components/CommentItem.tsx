@@ -10,6 +10,7 @@
 import { Heart, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Comment } from '../types';
 import { formatAbsoluteTime, resolveMediaUrl } from '../utils';
+import styles from './CommentItem.module.css';
 
 interface CommentItemProps {
   comment: Comment;
@@ -43,35 +44,35 @@ export default function CommentItem({
   onDelete,
 }: CommentItemProps) {
   return (
-    <div key={comment.id} id={`comment-${comment.id}`} className={`post-detail-comment ${isReply ? 'comment-reply-item' : ''}`}>
-      <div className="post-detail-comment-avatar-link" onClick={() => onProfileClick(comment.user_id)} style={{ cursor: 'pointer' }}>
+    <div key={comment.id} id={`comment-${comment.id}`} className={`${styles.comment} ${isReply ? styles.replyItem : ''}`}>
+      <div className={styles.avatarLink} onClick={() => onProfileClick(comment.user_id)} style={{ cursor: 'pointer' }}>
         {comment.avatar ? (
-          <img src={resolveMediaUrl(comment.avatar) || ''} alt="" className="post-detail-comment-avatar" />
+          <img src={resolveMediaUrl(comment.avatar) || ''} alt="" className={styles.avatar} />
         ) : (
-          <div className="post-detail-comment-avatar-placeholder">
+          <div className={styles.avatarPlaceholder}>
             {comment.username.charAt(0).toUpperCase()}
           </div>
         )}
       </div>
-      <div ref={innerRef} style={{ flex: 1 }} className={activeHighlighted ? 'comment-highlight' : ''}>
-        <div className="post-detail-comment-content">
-          <span className="post-detail-comment-username-link" onClick={() => onProfileClick(comment.user_id)} style={{ cursor: 'pointer' }}>{comment.username}</span>
+      <div ref={innerRef} style={{ flex: 1 }} className={activeHighlighted ? styles.highlight : ''}>
+        <div className={styles.content}>
+          <span className={styles.usernameLink} onClick={() => onProfileClick(comment.user_id)} style={{ cursor: 'pointer' }}>{comment.username}</span>
           {isReply && comment.parent_username && (
-            <span className="comment-reply-tag">@{comment.parent_username}</span>
+            <span className={styles.replyTag}>@{comment.parent_username}</span>
           )}
           {comment.content}
         </div>
-        <div className="comment-actions-row">
-          <span className="post-detail-comment-time">{formatAbsoluteTime(comment.created_at)}</span>
+        <div className={styles.actionsRow}>
+          <span className={styles.time}>{formatAbsoluteTime(comment.created_at)}</span>
           <button
-            className="comment-reply-btn"
+            className={styles.replyBtn}
             onClick={() => onReply(comment)}
           >
             回复
           </button>
           {!isReply && hasReplies && (
             <button
-              className="comment-collapse-btn"
+              className={styles.collapseBtn}
               onClick={() => onToggleReplies(comment.id)}
             >
               {isCollapsed ? (
@@ -91,7 +92,7 @@ export default function CommentItem({
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flexShrink: 0 }}>
         <button
-          className={`comment-like-btn ${comment.liked ? 'liked' : ''}`}
+          className={`${styles.likeBtn} ${comment.liked ? styles.liked : ''}`}
           onClick={() => onLike(comment.id)}
         >
           <Heart size={14} fill={comment.liked ? '#ed4956' : 'none'} stroke={comment.liked ? '#ed4956' : 'currentColor'} />
@@ -99,7 +100,7 @@ export default function CommentItem({
         </button>
         {comment.user_id === currentUserId && (
           <button
-            className="comment-delete-btn"
+            className={styles.deleteBtn}
             onClick={() => onDelete(comment.id)}
             title="删除评论"
           >

@@ -12,6 +12,7 @@ import { useEffect, useRef, RefObject } from 'react';
 import { X, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Post } from '../../types';
 import { resolveMediaUrl } from '../../utils';
+import styles from './PostMedia.module.css';
 
 interface PostMediaProps {
   post: Post;
@@ -96,35 +97,35 @@ export default function PostMedia({
   return (
     <>
       <div
-        className="post-detail-image-section"
+        className={styles.imageSection}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
         {post.video_url ? (
-          <video ref={detailVideoRef} src={resolveMediaUrl(post.video_url) || undefined} controls className="post-detail-video" poster={resolveMediaUrl(post.video_cover) || undefined} onLoadedMetadata={(e) => { e.currentTarget.volume = 0.8; }} />
+          <video ref={detailVideoRef} src={resolveMediaUrl(post.video_url) || undefined} controls className={styles.video} poster={resolveMediaUrl(post.video_cover) || undefined} onLoadedMetadata={(e) => { e.currentTarget.volume = 0.8; }} />
         ) : (
           <>
-            <div className="post-detail-image-carousel" ref={scrollRef} onScroll={handleScroll}>
+            <div className={styles.imageCarousel} ref={scrollRef} onScroll={handleScroll}>
               {images.map((url, i) => (
-                <img key={i} src={resolveMediaUrl(url) || url} alt={post.title} className="post-detail-image" />
+                <img key={i} src={resolveMediaUrl(url) || url} alt={post.title} className={styles.image} />
               ))}
             </div>
-            <button className="post-zoom-btn" onClick={(e) => { e.stopPropagation(); setZoomed(true); }} aria-label="放大查看">
+            <button className={styles.zoomBtn} onClick={(e) => { e.stopPropagation(); setZoomed(true); }} aria-label="放大查看">
               <ZoomIn size={20} />
             </button>
             {images.length > 1 && (
               <>
-                <button className="post-carousel-btn post-carousel-prev" onClick={goToPrev} aria-label="上一张">
+                <button className={`${styles.carouselBtn} ${styles.carouselPrev}`} onClick={goToPrev} aria-label="上一张">
                   <ChevronLeft size={28} />
                 </button>
-                <button className="post-carousel-btn post-carousel-next" onClick={goToNext} aria-label="下一张">
+                <button className={`${styles.carouselBtn} ${styles.carouselNext}`} onClick={goToNext} aria-label="下一张">
                   <ChevronRight size={28} />
                 </button>
-                <div className="post-image-dots">
+                <div className={styles.imageDots}>
                   {images.map((_, i) => (
                     <span
                       key={i}
-                      className={`post-image-dot ${i === currentImageIndex ? 'active' : ''}`}
+                      className={`${styles.imageDot} ${i === currentImageIndex ? styles.active : ''}`}
                       onClick={(e) => { e.stopPropagation(); scrollToIndex(i); }}
                     />
                   ))}
@@ -136,38 +137,38 @@ export default function PostMedia({
       </div>
 
       {zoomed && (
-        <div className="post-zoom-overlay" onClick={(e) => { e.stopPropagation(); setZoomed(false); }}>
-          <button className="post-detail-close" onClick={(e) => { e.stopPropagation(); setZoomed(false); }} aria-label="关闭缩放">
+        <div className={styles.zoomOverlay} onClick={(e) => { e.stopPropagation(); setZoomed(false); }}>
+          <button className={styles.close} onClick={(e) => { e.stopPropagation(); setZoomed(false); }} aria-label="关闭缩放">
             <X size={28} />
           </button>
-          <div className="post-zoom-content">
+          <div className={styles.zoomContent}>
             {images.length > 1 && (
-              <button className="post-zoom-nav post-zoom-prev" onClick={(e) => { e.stopPropagation(); goToPrev(e); }} aria-label="上一张">
+              <button className={`${styles.zoomNav} ${styles.zoomPrev}`} onClick={(e) => { e.stopPropagation(); goToPrev(e); }} aria-label="上一张">
                 <ChevronLeft size={32} />
               </button>
             )}
-            <div className="post-zoom-carousel" ref={zoomScrollRef} onScroll={handleZoomScroll}>
+            <div className={styles.zoomCarousel} ref={zoomScrollRef} onScroll={handleZoomScroll}>
               {images.map((url, i) => (
                 <img
                   key={i}
                   src={resolveMediaUrl(url) || url}
                   alt=""
-                  className="post-zoom-image"
+                  className={styles.zoomImage}
                   onClick={(e) => { e.stopPropagation(); setZoomed(false); }}
                 />
               ))}
             </div>
             {images.length > 1 && (
-              <button className="post-zoom-nav post-zoom-next" onClick={(e) => { e.stopPropagation(); goToNext(e); }} aria-label="下一张">
+              <button className={`${styles.zoomNav} ${styles.zoomNext}`} onClick={(e) => { e.stopPropagation(); goToNext(e); }} aria-label="下一张">
                 <ChevronRight size={32} />
               </button>
             )}
             {images.length > 1 && (
-              <div className="post-zoom-dots">
+              <div className={styles.zoomDots}>
                 {images.map((_, i) => (
                   <span
                     key={i}
-                    className={`post-image-dot ${i === currentImageIndex ? 'active' : ''}`}
+                    className={`${styles.imageDot} ${i === currentImageIndex ? styles.active : ''}`}
                     onClick={(e) => { e.stopPropagation(); scrollToIndex(i); }}
                   />
                 ))}

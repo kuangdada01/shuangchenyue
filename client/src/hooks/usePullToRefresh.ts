@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useRef, RefObject } from 'react';
-import { showToast } from '../components/Toast';
+import { showToast } from '../components/ui/Toast';
 
 /** 进度圆环周长（r=12 → ~75.4），供 JSX 初始 strokeDasharray 使用 */
 export const PULL_CIRCUMFERENCE = 2 * Math.PI * 12;

@@ -55,7 +55,7 @@ export default function MessageBubble({
           onTouchMove={onTouchMove}
         >
           {msg.image_url ? (
-            <img src={resolveMediaUrl(msg.image_url) || ''} alt="" className={styles.messageImage} onClick={() => onZoomImage(msg.image_url!)} />
+            <img src={resolveMediaUrl(msg.image_url) || ''} alt="图片" className={styles.messageImage} onClick={() => onZoomImage(msg.image_url!)} />
           ) : (
             <div className={`${styles.message} ${isSent ? styles.sent : styles.received}`}>
               {msg.content}

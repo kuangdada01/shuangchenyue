@@ -7,9 +7,14 @@
  * 对外保持与原 useFollow/useLike/useRepost/useBookmark 相同的
  * get/set 接口，组件行为完全不变。
  *
+ * 注意: 所有 get/set 函数必须 useCallback 稳定化，否则消费方
+ * 把它们放进 effect 依赖数组时，每次渲染都会触发 effect 重跑
+ * （曾导致 PostDetail 展开回复后被重新折叠、重复请求）。
+ *
  * 后续（P3）可进一步演进为 useMutation 乐观更新，缓存层无需再动。
  */
 
+import { useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 // ============================================================
@@ -21,13 +26,17 @@ const followKey = (userId: number) => ['cache', 'follow', userId] as const;
 /** 关注状态缓存 hook（接口与原 useFollow 一致） */
 export function useFollow() {
   const qc = useQueryClient();
-  return {
-    getFollowStatus: (userId: number): boolean | undefined =>
-      qc.getQueryData<boolean>(followKey(userId)),
-    setFollowStatus: (userId: number, isFollowing: boolean): void => {
+  const getFollowStatus = useCallback(
+    (userId: number): boolean | undefined => qc.getQueryData<boolean>(followKey(userId)),
+    [qc]
+  );
+  const setFollowStatus = useCallback(
+    (userId: number, isFollowing: boolean): void => {
       qc.setQueryData(followKey(userId), isFollowing);
     },
-  };
+    [qc]
+  );
+  return useMemo(() => ({ getFollowStatus, setFollowStatus }), [getFollowStatus, setFollowStatus]);
 }
 
 // ============================================================
@@ -44,13 +53,17 @@ const likeKey = (postId: number) => ['cache', 'like', postId] as const;
 /** 点赞缓存 hook（接口与原 useLike 一致） */
 export function useLike() {
   const qc = useQueryClient();
-  return {
-    getLikeInfo: (postId: number): LikeInfo | undefined =>
-      qc.getQueryData<LikeInfo>(likeKey(postId)),
-    setLikeInfo: (postId: number, liked: boolean, likeCount: number): void => {
+  const getLikeInfo = useCallback(
+    (postId: number): LikeInfo | undefined => qc.getQueryData<LikeInfo>(likeKey(postId)),
+    [qc]
+  );
+  const setLikeInfo = useCallback(
+    (postId: number, liked: boolean, likeCount: number): void => {
       qc.setQueryData(likeKey(postId), { liked, likeCount });
     },
-  };
+    [qc]
+  );
+  return useMemo(() => ({ getLikeInfo, setLikeInfo }), [getLikeInfo, setLikeInfo]);
 }
 
 // ============================================================
@@ -62,13 +75,17 @@ const repostKey = (postId: number) => ['cache', 'repost', postId] as const;
 /** 转发缓存 hook（接口与原 useRepost 一致） */
 export function useRepost() {
   const qc = useQueryClient();
-  return {
-    getReposted: (postId: number): boolean | undefined =>
-      qc.getQueryData<boolean>(repostKey(postId)),
-    setReposted: (postId: number, reposted: boolean): void => {
+  const getReposted = useCallback(
+    (postId: number): boolean | undefined => qc.getQueryData<boolean>(repostKey(postId)),
+    [qc]
+  );
+  const setReposted = useCallback(
+    (postId: number, reposted: boolean): void => {
       qc.setQueryData(repostKey(postId), reposted);
     },
-  };
+    [qc]
+  );
+  return useMemo(() => ({ getReposted, setReposted }), [getReposted, setReposted]);
 }
 
 // ============================================================
@@ -80,11 +97,15 @@ const bookmarkKey = (postId: number) => ['cache', 'bookmark', postId] as const;
 /** 收藏缓存 hook（接口与原 useBookmark 一致） */
 export function useBookmark() {
   const qc = useQueryClient();
-  return {
-    getBookmarked: (postId: number): boolean | undefined =>
-      qc.getQueryData<boolean>(bookmarkKey(postId)),
-    setBookmarked: (postId: number, bookmarked: boolean): void => {
+  const getBookmarked = useCallback(
+    (postId: number): boolean | undefined => qc.getQueryData<boolean>(bookmarkKey(postId)),
+    [qc]
+  );
+  const setBookmarked = useCallback(
+    (postId: number, bookmarked: boolean): void => {
       qc.setQueryData(bookmarkKey(postId), bookmarked);
     },
-  };
+    [qc]
+  );
+  return useMemo(() => ({ getBookmarked, setBookmarked }), [getBookmarked, setBookmarked]);
 }
