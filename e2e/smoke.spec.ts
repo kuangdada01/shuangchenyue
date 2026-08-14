@@ -12,12 +12,18 @@ test('首页信息流正常渲染', async ({ page }) => {
   // 侧边导航固定文案（哈希无关）
   await expect(page.locator('body')).toContainText('图书');
   await expect(page.locator('nav').first()).toBeVisible();
-  // 信息流区域：有帖子出现点赞按钮，或空态欢迎文案
+  // 等待信息流异步加载完成（点赞按钮出现或空态文案出现），避免竞态
+  const likeBtn = page.locator('button[aria-label="点赞"]').first();
+  const welcome = page.getByText('欢迎来到 霜晨月');
+  await Promise.race([
+    likeBtn.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {}),
+    welcome.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {}),
+  ]);
   const hasFeed = (await page.locator('button[aria-label="点赞"]').count()) > 0;
   if (hasFeed) {
-    await expect(page.locator('button[aria-label="点赞"]').first()).toBeVisible();
+    await expect(likeBtn).toBeVisible();
   } else {
-    await expect(page.locator('body')).toContainText('欢迎来到 霜晨月');
+    await expect(welcome).toBeVisible();
   }
 });
 

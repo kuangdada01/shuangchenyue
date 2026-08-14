@@ -147,11 +147,11 @@ export function createApp(): express.Express {
   });
 
   /**
-   * SPA 路由回退（Express 5 通配语法 /*splat）
+   * SPA 路由回退（Express 4 通配符语法）
    * 所有未匹配 API 的请求都返回 index.html
    * 由前端路由（react-router-dom）处理具体页面
    */
-  app.get('/*splat', (_req, res) => {
+  app.get('*', (_req, res) => {
     res.sendFile(path.join(clientDist, 'index.html'));
   });
 
