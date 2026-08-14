@@ -575,7 +575,7 @@ export default function CreatePost() {
             className={composer.gridDragging}
             style={{ width: `${dragSize.w}px`, height: `${dragSize.h}px` }}
           >
-            <img src={imagePreviews[dragSrcIndex]} alt="" draggable={false} />
+            <img src={imagePreviews[dragSrcIndex]} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>,
           document.body
         )}

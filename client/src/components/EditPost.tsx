@@ -450,7 +450,7 @@ export default function EditPost() {
             className={composer.gridDragging}
             style={{ width: `${dragSize.w}px`, height: `${dragSize.h}px` }}
           >
-            <img src={resolveMediaUrl(images[dragSrcIndex].url) || images[dragSrcIndex].url} alt="" draggable={false} />
+            <img src={resolveMediaUrl(images[dragSrcIndex].url) || images[dragSrcIndex].url} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>,
           document.body
         )}
