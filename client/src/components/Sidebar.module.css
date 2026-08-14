@@ -59,7 +59,7 @@
    overflow:hidden 裁剪成"半个边框"（默认 outline 画在元素外） */
 .sidebar :focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 2px var(--accent);
+  box-shadow: inset 0 0 0 2px #4260ea;
 }
 
 .itemIcon {
