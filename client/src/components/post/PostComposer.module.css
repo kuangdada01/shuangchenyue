@@ -176,8 +176,8 @@
   cursor: pointer;
   padding: 0;
   z-index: 5;
-  /* 常驻显示：触摸设备无 hover，隐藏会导致无法删除图片 */
-  opacity: 1;
+  /* 桌面端 hover 显示；移动端（无 hover）由 @media 内常显 */
+  opacity: 0;
   transition: opacity 0.15s, background 0.15s;
 }
 
@@ -395,6 +395,10 @@
 
   .overlayBody {
     padding: 16px;
+  }
+
+  .gridDeleteBtn {
+    opacity: 1;
   }
 
   .editLayout {

@@ -313,6 +313,10 @@ export default function EditPost() {
   };
 
   const handleRemoveImage = (index: number) => {
+    // 清理可能残留的拖拽状态（删除按钮不应触发拖拽，防御异常路径）
+    if (dragRef.current.timer) { clearTimeout(dragRef.current.timer); dragRef.current.timer = null; }
+    dragRef.current.index = -1; dragRef.current.active = false;
+    setIsPressing(false); setIsDragging(false);
     setImages(prev => {
       const item = prev[index];
       if (item.isNew) {
@@ -411,7 +415,11 @@ export default function EditPost() {
                       <img src={resolveMediaUrl(img.url) || img.url} alt={`图片 ${i + 1}`} draggable={false} />
                       <span className={composer.gridIndex}>{i + 1}</span>
                       {img.isNew && <span className={composer.gridNewBadge}>新</span>}
-                      <button className={composer.gridDeleteBtn} onClick={(e) => { e.stopPropagation(); handleRemoveImage(i); }}>
+                      <button
+                        className={composer.gridDeleteBtn}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); handleRemoveImage(i); }}
+                      >
                         <X size={14} />
                       </button>
                     </div>
