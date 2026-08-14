@@ -19,6 +19,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { postsFeedKey } from '../hooks/usePostsFeed';
 import api from '../api';
 import { User, Post } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -42,6 +44,7 @@ interface ProfileProps {
 export default function Profile({ embeddedUserId, onBack }: ProfileProps = {}) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user: currentUser, updateUser, logout } = useAuth();
   const { getFollowStatus, setFollowStatus } = useFollow();
   const { follow, unfollow } = useFollowUser();
@@ -198,6 +201,10 @@ export default function Profile({ embeddedUserId, onBack }: ProfileProps = {}) {
     try {
       await api.delete(`/posts/${deletePostId}`);
       setPosts(prev => prev.filter(p => p.id !== deletePostId));
+      // 同步信息流缓存，回到首页立即生效（staleTime: Infinity 不会自动重取）
+      queryClient.setQueryData(postsFeedKey, (prev: Post[] | undefined) =>
+        prev ? prev.filter(p => p.id !== deletePostId) : prev
+      );
       showToast('删除成功！');
     } catch {}
     setDeletePostId(null);
