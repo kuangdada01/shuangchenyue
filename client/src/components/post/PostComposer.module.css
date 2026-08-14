@@ -151,6 +151,13 @@
   opacity: 0.3;
 }
 
+/* 拖拽中的图片浮起效果（useImageGridDrag：按下即拖，实时重排） */
+.dragging {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 3;
+}
+
 .gridItem img {
   /* 绝对定位填充：img 不参与布局，格子高度完全由 aspect-ratio: 1 决定，
      16:9 等宽图在拖拽/重排动画中也不会把格子撑成长方形 */

@@ -12,9 +12,9 @@
  * ============================================================
  */
 
-import { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, X, ImagePlus } from 'lucide-react';
+import { useImageGridDrag } from '../hooks/useImageGridDrag';
 import EmojiPicker from './EmojiPicker';
 import ConfirmDialog from './ui/ConfirmDialog';
 import { useAuth } from '../context/AuthContext';
@@ -52,21 +52,9 @@ export default function EditPost() {
 
   // Drag state for 9-grid
   const [step, setStep] = useState<'grid' | 'edit'>('grid');
-  const [overIndex, setOverIndex] = useState<number | null>(null);
-  const overIndexRef = useRef<number | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragSrcIndex, setDragSrcIndex] = useState(-1);
-  const [isPressing, setIsPressing] = useState(false);
-  const [dragSize, setDragSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
-  const dragRef = useRef<{
-    index: number; startX: number; startY: number; offsetX: number; offsetY: number;
-    currentX: number; currentY: number; active: boolean; timer: ReturnType<typeof setTimeout> | null;
-  }>({ index: -1, startX: 0, startY: 0, offsetX: 0, offsetY: 0, currentX: 0, currentY: 0, active: false, timer: null });
-  const gridItemRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const dragPortalRef = useRef<HTMLDivElement | null>(null);
-  const overlayRef = useRef<HTMLDivElement | null>(null);
-  const prevPositionsRef = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const animatingRef = useRef(false);
+
+  // 图片拖拽排序（按下即拖，实时重排；见 hooks/useImageGridDrag）
+  const { dragIndex, gridRefs, handlers: dragHandlers } = useImageGridDrag(setImages);
 
   useEffect(() => {
     if (editPost) {
@@ -92,202 +80,6 @@ export default function EditPost() {
       return () => clearTimeout(timer);
     }
   }, [step]);
-
-  // Update dragged item position to follow cursor
-  const updateDraggedPosition = useCallback(() => {
-    const d = dragRef.current;
-    if (!d.active) return;
-    const el = dragPortalRef.current;
-    if (!el) return;
-    el.style.left = `${d.currentX - d.offsetX}px`;
-    el.style.top = `${d.currentY - d.offsetY}px`;
-  }, []);
-
-  // Virtual order: reorders non-dragged items
-  const reorderedIndices = useMemo(() => {
-    if (!isDragging || overIndex === null || dragSrcIndex < 0 || overIndex === dragSrcIndex) return [];
-    const others = Array.from({ length: images.length }, (_, k) => k).filter(k => k !== dragSrcIndex);
-    others.splice(overIndex, 0, dragSrcIndex);
-    return others.filter(i => i !== dragSrcIndex);
-  }, [isDragging, overIndex, dragSrcIndex, images.length]);
-
-  // Save initial positions when drag starts
-  useLayoutEffect(() => {
-    if (!isDragging || dragSrcIndex < 0) return;
-    const positions = new Map<number, { x: number; y: number }>();
-    gridItemRefs.current.forEach((el, i) => {
-      if (el && i !== dragSrcIndex) {
-        const r = el.getBoundingClientRect();
-        positions.set(i, { x: r.left, y: r.top });
-      }
-    });
-    prevPositionsRef.current = positions;
-  }, [isDragging, dragSrcIndex]);
-
-  // FLIP animation
-  // 依赖用序列化内容而非引用：内容未变（仅引用变）时避免动画重复触发叠加
-  const flipKey = reorderedIndices.join(',');
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useLayoutEffect(() => {
-    if (!isDragging || reorderedIndices.length === 0) return;
-    const prevPos = prevPositionsRef.current;
-    const newPositions = new Map<number, { x: number; y: number }>();
-    let hasTransform = false;
-
-    reorderedIndices.forEach(i => {
-      const el = gridItemRefs.current[i];
-      if (!el) return;
-      const r = el.getBoundingClientRect();
-      newPositions.set(i, { x: r.left, y: r.top });
-      const oldPos = prevPos.get(i);
-      if (oldPos) {
-        const dx = oldPos.x - r.left;
-        const dy = oldPos.y - r.top;
-        if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
-          el.style.transition = 'none';
-          el.style.transform = `translate(${dx}px, ${dy}px)`;
-          hasTransform = true;
-        }
-      }
-    });
-
-    reorderedIndices.forEach(i => {
-      const pos = newPositions.get(i);
-      if (pos) prevPositionsRef.current.set(i, pos);
-    });
-
-    if (hasTransform) {
-      animatingRef.current = true;
-      requestAnimationFrame(() => {
-        reorderedIndices.forEach(i => {
-          const el = gridItemRefs.current[i];
-          if (!el) return;
-          el.style.transition = 'transform 0.25s ease';
-          el.style.transform = '';
-        });
-        setTimeout(() => { animatingRef.current = false; }, 350);
-      });
-    }
-  }, [flipKey]);
-
-  // Cleanup on drag end
-  useEffect(() => {
-    if (!isDragging) return;
-    return () => {
-      gridItemRefs.current.forEach(el => {
-        if (el) {
-          el.style.transform = '';
-          el.style.transition = '';
-        }
-      });
-      prevPositionsRef.current.clear();
-    };
-  }, [isDragging]);
-
-  // 拖拽处理函数（Pointer Events 统一鼠标和触摸，避免 Android WebView touchend 丢失问题）
-  const reorder = useCallback((from: number, to: number) => {
-    setImages(prev => {
-      const arr = [...prev];
-      const [item] = arr.splice(from, 1);
-      arr.splice(to, 0, item);
-      return arr;
-    });
-  }, []);
-
-  const startDrag = useCallback((index: number) => {
-    const el = gridItemRefs.current[index];
-    if (!el) return;
-    el.style.transform = '';
-    const rect = el.getBoundingClientRect();
-    const d = dragRef.current;
-    d.offsetX = d.currentX - rect.left;
-    d.offsetY = d.currentY - rect.top;
-    d.active = true;
-    setIsPressing(false);
-    setDragSize({ w: rect.width, h: rect.height });
-    setDragSrcIndex(index);
-    setOverIndex(index);
-    overIndexRef.current = index;
-    setIsDragging(true);
-    navigator.vibrate?.(50);
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'grabbing';
-  }, []);
-
-  const handlePointerDown = (e: React.PointerEvent, index: number) => {
-    if (isDragging) return;
-    const d = dragRef.current;
-    d.index = index;
-    d.startX = e.clientX; d.startY = e.clientY;
-    d.currentX = e.clientX; d.currentY = e.clientY;
-    d.active = false;
-    setIsPressing(true);
-    d.timer = setTimeout(() => startDrag(index), 500);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    const d = dragRef.current;
-    if (d.index < 0) return;
-    if (!d.active) {
-      if (Math.abs(e.clientX - d.startX) > 5 || Math.abs(e.clientY - d.startY) > 5) {
-        if (d.timer) { clearTimeout(d.timer); d.timer = null; }
-        d.index = -1; setIsPressing(false);
-      }
-      return;
-    }
-    if (e.clientX === d.currentX && e.clientY === d.currentY) return;
-    d.currentX = e.clientX; d.currentY = e.clientY;
-    updateDraggedPosition();
-    if (animatingRef.current) return;
-    let newOver = overIndex !== null ? overIndex : d.index;
-    gridItemRefs.current.forEach((el, i) => {
-      if (!el || i === d.index) return;
-      const r = el.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-      const hw = r.width * 0.3;
-      const hh = r.height * 0.3;
-      if (e.clientX >= cx - hw && e.clientX <= cx + hw && e.clientY >= cy - hh && e.clientY <= cy + hh) {
-        newOver = i;
-      }
-    });
-    if (newOver !== overIndex) {
-      setOverIndex(newOver);
-      overIndexRef.current = newOver;
-    }
-  };
-
-  const finishDrag = useCallback(() => {
-    const d = dragRef.current;
-    if (d.timer) { clearTimeout(d.timer); d.timer = null; }
-    const currentOver = overIndexRef.current;
-    if (d.active && currentOver !== null && d.index !== currentOver) {
-      reorder(d.index, currentOver);
-    }
-    d.index = -1; d.active = false;
-    dragPortalRef.current = null;
-    overIndexRef.current = null;
-    setIsDragging(false); setOverIndex(null); setDragSrcIndex(-1); setIsPressing(false);
-    document.body.style.userSelect = '';
-    document.body.style.cursor = '';
-  }, [reorder]);
-
-  const handlePointerUp = useCallback(() => {
-    finishDrag();
-  }, [finishDrag]);
-
-  const handlePointerCancel = useCallback(() => {
-    const d = dragRef.current;
-    if (d.timer) { clearTimeout(d.timer); d.timer = null; }
-    // 取消拖拽（如系统手势中断）：不重排，仅重置
-    d.index = -1; d.active = false;
-    dragPortalRef.current = null;
-    overIndexRef.current = null;
-    setIsDragging(false); setOverIndex(null); setDragSrcIndex(-1); setIsPressing(false);
-    document.body.style.userSelect = '';
-    document.body.style.cursor = '';
-  }, []);
-
 
   const handleAddImages = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -316,10 +108,6 @@ export default function EditPost() {
   };
 
   const handleRemoveImage = (index: number) => {
-    // 清理可能残留的拖拽状态（删除按钮不应触发拖拽，防御异常路径）
-    if (dragRef.current.timer) { clearTimeout(dragRef.current.timer); dragRef.current.timer = null; }
-    dragRef.current.index = -1; dragRef.current.active = false;
-    setIsPressing(false); setIsDragging(false);
     setImages(prev => {
       const item = prev[index];
       if (item.isNew) {
@@ -379,14 +167,13 @@ export default function EditPost() {
 
   // Step 1: Grid view for image management
   if (step === 'grid') {
-    const displayOrder = reorderedIndices.length > 0 ? reorderedIndices : images.map((_, i) => i);
+    const displayOrder = images.map((_, i) => i);
     return (
       <div
-        ref={overlayRef}
         className={`${composer.overlay}${closing ? ` ${composer.closing}` : ''}`}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
+        onPointerMove={dragHandlers.onPointerMove}
+        onPointerUp={dragHandlers.onPointerUp}
+        onPointerCancel={dragHandlers.onPointerCancel}
       >
         <div className={`${composer.dialog}${closing ? ` ${composer.closing}` : ''}`}>
           <div className={composer.overlayHeader}>
@@ -407,17 +194,15 @@ export default function EditPost() {
               <div className={composer.grid}>
                 {displayOrder.map((i) => {
                   const img = images[i];
-                  const isBeingDragged = isDragging && i === dragSrcIndex;
                   return (
                     <div
                       key={`${img.url}-${i}`}
-                      ref={el => { gridItemRefs.current[i] = el; }}
+                      ref={el => { gridRefs.current[i] = el; }}
                       className={[
                         composer.gridItem,
-                        isPressing && dragRef.current.index === i ? (composer.pressing || '') : '',
-                        isBeingDragged ? (composer.draggingSource || '') : '',
+                        i === dragIndex ? (composer.dragging || '') : '',
                       ].filter(Boolean).join(' ')}
-                      onPointerDown={(e) => handlePointerDown(e, i)}
+                      onPointerDown={(e) => dragHandlers.onPointerDown(e, i)}
                     >
                       <img src={resolveMediaUrl(img.url) || img.url} alt={`图片 ${i + 1}`} draggable={false} />
                       <span className={composer.gridIndex}>{i + 1}</span>
@@ -442,25 +227,6 @@ export default function EditPost() {
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" multiple style={{ display: 'none' }} onChange={handleAddImages} />
           </div>
         </div>
-
-        {/* Dragged item — portal */}
-        {isDragging && dragSrcIndex >= 0 && images[dragSrcIndex] && createPortal(
-          <div
-            ref={(el) => {
-              dragPortalRef.current = el;
-              if (el) {
-                const d = dragRef.current;
-                el.style.left = `${d.currentX - d.offsetX}px`;
-                el.style.top = `${d.currentY - d.offsetY}px`;
-              }
-            }}
-            className={composer.gridDragging}
-            style={{ width: `${dragSize.w}px`, height: `${dragSize.h}px` }}
-          >
-            <img src={resolveMediaUrl(images[dragSrcIndex].url) || images[dragSrcIndex].url} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          </div>,
-          document.body
-        )}
 
         {showDiscardConfirm && (
           <ConfirmDialog
