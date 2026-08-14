@@ -176,12 +176,14 @@
   cursor: pointer;
   padding: 0;
   z-index: 5;
-  opacity: 0;
-  transition: opacity 0.15s;
+  /* 常驻显示：触摸设备无 hover，隐藏会导致无法删除图片 */
+  opacity: 1;
+  transition: opacity 0.15s, background 0.15s;
 }
 
 .gridItem:hover .gridDeleteBtn {
   opacity: 1;
+  background: rgba(0, 0, 0, 0.8);
 }
 
 .gridDeleteBtn:hover {
