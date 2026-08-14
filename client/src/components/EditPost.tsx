@@ -125,6 +125,9 @@ export default function EditPost() {
   }, [isDragging, dragSrcIndex]);
 
   // FLIP animation
+  // 依赖用序列化内容而非引用：内容未变（仅引用变）时避免动画重复触发叠加
+  const flipKey = reorderedIndices.join(',');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
     if (!isDragging || reorderedIndices.length === 0) return;
     const prevPos = prevPositionsRef.current;
@@ -165,7 +168,7 @@ export default function EditPost() {
         setTimeout(() => { animatingRef.current = false; }, 350);
       });
     }
-  }, [reorderedIndices]);
+  }, [flipKey]);
 
   // Cleanup on drag end
   useEffect(() => {

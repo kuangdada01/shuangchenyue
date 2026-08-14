@@ -109,9 +109,12 @@ export default function CreatePost() {
     prevPositionsRef.current = positions;
   }, [isDragging, dragSrcIndex]);
 
-  // FLIP 动画: reorderedIndices 改变 DOM 顺序 → 动画过渡位置变化
-  useLayoutEffect(() => {
-    if (!isDragging || reorderedIndices.length === 0) return;
+    // FLIP 动画: reorderedIndices 改变 DOM 顺序 → 动画过渡位置变化
+    // 依赖用序列化内容而非引用：内容未变（仅引用变）时避免动画重复触发叠加
+    const flipKey = reorderedIndices.join(',');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useLayoutEffect(() => {
+      if (!isDragging || reorderedIndices.length === 0) return;
 
     const prevPos = prevPositionsRef.current;
     const newPositions = new Map<number, { x: number; y: number }>();
@@ -152,7 +155,7 @@ export default function CreatePost() {
         setTimeout(() => { animatingRef.current = false; }, 350);
       });
     }
-  }, [reorderedIndices]);
+  }, [flipKey]);
 
   // 拖拽结束时清理
   useEffect(() => {
@@ -495,7 +498,7 @@ export default function CreatePost() {
             const isBeingDragged = isDragging && i === dragSrcIndex;
             return (
               <div
-                key={i}
+                key={imagePreviews[i]}
                 ref={el => { gridItemRefs.current[i] = el; }}
                 className={[
                   composer.gridItem,
