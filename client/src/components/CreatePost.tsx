@@ -497,7 +497,11 @@ export default function CreatePost() {
               <div
                 key={i}
                 ref={el => { gridItemRefs.current[i] = el; }}
-                className={`${composer.gridItem}${isPressing && dragRef.current.index === i ? (composer.pressing || '') : ''}${isBeingDragged ? (composer.draggingSource || '') : ''}`}
+                className={[
+                  composer.gridItem,
+                  isPressing && dragRef.current.index === i ? (composer.pressing || '') : '',
+                  isBeingDragged ? (composer.draggingSource || '') : '',
+                ].filter(Boolean).join(' ')}
                 onPointerDown={(e) => handlePointerDown(e, i)}
               >
                 <img src={src} alt={`图片 ${i + 1}`} draggable={false} />
