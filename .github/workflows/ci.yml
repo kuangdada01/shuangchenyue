@@ -21,8 +21,8 @@ jobs:
             server/package-lock.json
             client/package-lock.json
 
-      - name: 安装依赖
-        run: npm run install:all
+      - name: 安装依赖（含根目录 playwright 等）
+        run: npm install && npm run install:all
 
       - name: 构建（shared → server → client）
         run: npm run build
