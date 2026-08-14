@@ -55,6 +55,13 @@
   color: #4260ea;
 }
 
+/* 键盘导航（Tab）聚焦环：用 inset 阴影，避免被 .sidebar 的
+   overflow:hidden 裁剪成"半个边框"（默认 outline 画在元素外） */
+.sidebar :focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
 .itemIcon {
   min-width: 24px;
   display: flex;
