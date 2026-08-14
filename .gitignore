@@ -1,8 +1,11 @@
 node_modules/
 dist/
 .env
+.env.*
+!.env.example
 *.log
 .DS_Store
+Thumbs.db
 
 # Server
 server/mimo.db
@@ -41,6 +44,9 @@ client/public/music/
 # Android keystore
 client/android/keystore.properties
 *.keystore
+*.jks
+*.p12
+*.pfx
 
 # Playwright
 test-results/
