@@ -409,7 +409,7 @@ export default function EditPost() {
                     <div
                       key={`${img.url}-${i}`}
                       ref={el => { gridItemRefs.current[i] = el; }}
-                      className={`${composer.gridItem}${isPressing && dragRef.current.index === i ? composer.pressing : ''}${isBeingDragged ? composer.draggingSource : ''}`}
+                      className={`${composer.gridItem}${isPressing && dragRef.current.index === i ? (composer.pressing || '') : ''}${isBeingDragged ? (composer.draggingSource || '') : ''}`}
                       onPointerDown={(e) => handlePointerDown(e, i)}
                     >
                       <img src={resolveMediaUrl(img.url) || img.url} alt={`图片 ${i + 1}`} draggable={false} />
