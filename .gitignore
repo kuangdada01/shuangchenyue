@@ -55,3 +55,10 @@ playwright-report/
 *.pid
 dev-server*.log
 dev-vite*.log
+
+# npm pack 产物（防提交进仓库、防整树打包时被重复包含）
+*.tgz
+*.tar.gz
+
+# J-Space 工作台账（本地工作状态，不入库）
+.jspace/
