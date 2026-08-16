@@ -40,9 +40,13 @@ export function myReposts(): Promise<{ posts: Post[] }> {
   return api.get('/posts/reposts/me').then(r => r.data);
 }
 
-/** 创建图文帖子（multipart） */
+/**
+ * 创建图文帖子（multipart）
+ * timeout: 0 — 图片最多9张×10MB，慢速网络上传可能超过全局15s超时；
+ * 超时会让客户端误报失败，而服务端仍在处理并可能已入库（"发布失败但已发出"）。
+ */
 export function createImagePost(formData: FormData): Promise<Post> {
-  return api.post('/posts', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
+  return api.post('/posts', formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 0 }).then(r => r.data);
 }
 
 /** 创建视频帖子（multipart） */
@@ -60,9 +64,9 @@ export function deleteTempVideo(url: string): Promise<unknown> {
   return api.delete('/posts/video-temp', { data: { url } }).then(r => r.data);
 }
 
-/** 编辑帖子 */
+/** 编辑帖子（multipart，新增图片可能达9×10MB，同样禁用超时避免误报失败） */
 export function updatePost(postId: number, formData: FormData): Promise<Post> {
-  return api.put(`/posts/${postId}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
+  return api.put(`/posts/${postId}`, formData, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 0 }).then(r => r.data);
 }
 
 /** 删除帖子 */

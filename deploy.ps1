@@ -6,7 +6,8 @@ param(
     [string]$HOSTKEY = ""
 )
 $USER = "root"
-$REMOTE_DIR = "/var/www/shuangchenyue"
+# 注意: 线上 nginx 与 pm2 实际指向 /var/www/shuangchenyue-v2（v1 为旧部署，勿再覆盖）
+$REMOTE_DIR = "/var/www/shuangchenyue-v2"
 
 # 使用 pscp/plink（支持密码参数）
 $PUTTY_DIR = "C:\Program Files\PuTTY"
@@ -56,6 +57,10 @@ Copy-Item "shared\package.json" "$tmpDir\shared\"
 
 # 复制客户端构建产物
 Copy-Item -Recurse "client\dist" "$tmpDir\client\dist"
+
+# 复制客户端 public 目录（音乐源文件在 public/music，服务端 /api/music 扫描此目录；
+# 缺失会导致音乐列表为空、播放器组件不显示）
+Copy-Item -Recurse "client\public" "$tmpDir\client\public"
 
 # 复制根目录配置
 Copy-Item ".env" "$tmpDir\"
