@@ -6,8 +6,8 @@ param(
     [string]$HOSTKEY = ""
 )
 $USER = "root"
-# 注意: 线上 nginx 与 pm2 实际指向 /var/www/shuangchenyue-v2（v1 为旧部署，勿再覆盖）
-$REMOTE_DIR = "/var/www/shuangchenyue-v2"
+# 部署目标目录（v1 旧部署已删除，目录已去掉 v2 后缀，nginx/pm2 均指向此处）
+$REMOTE_DIR = "/var/www/shuangchenyue"
 
 # 使用 pscp/plink（支持密码参数）
 $PUTTY_DIR = "C:\Program Files\PuTTY"
