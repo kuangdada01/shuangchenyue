@@ -48,7 +48,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('mimo_token'));
-  const [loading, setLoading] = useState(true);
+  // 初始加载态直接由 token 是否存在推导（有 token 才需要启动验证），
+  // 避免 effect 中同步 setState（react-hooks/set-state-in-effect）
+  const [loading, setLoading] = useState(() => !!localStorage.getItem('mimo_token'));
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const openLoginPrompt = () => setShowLoginPrompt(true);
@@ -65,8 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setToken(null);
         })
         .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
     }
   }, [token]);
 

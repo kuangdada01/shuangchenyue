@@ -18,9 +18,9 @@ import { useImageGridDrag } from '../hooks/useImageGridDrag';
 import EmojiPicker from './EmojiPicker';
 import ConfirmDialog from './ui/ConfirmDialog';
 import { useAuth } from '../context/AuthContext';
-import { useEvent } from '../context/CreateContext';
+import { useEvent, type EditPostData } from '../context/CreateContext';
 import { showToast } from './ui/Toast';
-import api from '../api';
+import { updatePost } from '../api/posts';
 import { resolveMediaUrl } from '../utils';
 import composer from './post/PostComposer.module.css';
 import panel from './post/PostDescriptionPanel.module.css';
@@ -56,17 +56,19 @@ export default function EditPost() {
   // 图片拖拽排序（按下即拖，实时重排；见 hooks/useImageGridDrag）
   const { dragIndex, gridRefs, handlers: dragHandlers } = useImageGridDrag(setImages);
 
-  useEffect(() => {
-    if (editPost) {
-      setDescription(editPost.description || '');
-      setCloseComments(editPost.closeComments);
-      setPinned(editPost.pinned);
-      setImages(editPost.images.map(url => ({ url, isNew: false })));
-      setCurrentImageIndex(0);
-      // Video posts skip grid step, go directly to edit
-      setStep(editPost.videoUrl ? 'edit' : 'grid');
-    }
-  }, [editPost]);
+  // 打开新帖子时同步编辑状态：改为渲染期调整（prev 值存 state 的官方模式），
+  // 替代 useEffect 内同步 setState（react-hooks/set-state-in-effect），行为一致
+  const [prevEditPost, setPrevEditPost] = useState<EditPostData | null>(null);
+  if (editPost && editPost !== prevEditPost) {
+    setPrevEditPost(editPost);
+    setDescription(editPost.description || '');
+    setCloseComments(editPost.closeComments);
+    setPinned(editPost.pinned);
+    setImages(editPost.images.map(url => ({ url, isNew: false })));
+    setCurrentImageIndex(0);
+    // Video posts skip grid step, go directly to edit
+    setStep(editPost.videoUrl ? 'edit' : 'grid');
+  }
 
   // 进入编辑步骤时光标定位到文字末尾
   useEffect(() => {
@@ -149,9 +151,9 @@ export default function EditPost() {
       if (closeComments) formData.append('close_comments', '1');
       if (pinned) formData.append('pinned', '1');
       images.filter(img => img.isNew && img.file).forEach(img => formData.append('images', img.file!));
-      await api.put(`/posts/${editPost.id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      // updatePost 使用 timeout: 0（新增图片最多9×10MB，慢速网络可能超过全局15s超时，
+      // 超时会导致"保存失败"误报，但服务端实际已保存）
+      await updatePost(editPost.id, formData);
       showToast('编辑成功！');
       doClose();
       onEditSave?.();

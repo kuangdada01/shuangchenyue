@@ -109,10 +109,17 @@ export default function Profile({ embeddedUserId, onBack }: ProfileProps = {}) {
     loadProfile();
   }, [userId, currentUser, getFollowStatus, setFollowStatus]);
 
+  // 切到收藏/转发标签时进入加载态（渲染期 prev 值模式，替代 effect 内同步 setState）
+  const [prevActiveTab, setPrevActiveTab] = useState(activeTab);
+  if (activeTab !== prevActiveTab) {
+    setPrevActiveTab(activeTab);
+    if (activeTab === 'bookmarks' && isOwnProfile) setLoadingBookmarks(true);
+    if (activeTab === 'reposts' && isOwnProfile) setLoadingReposts(true);
+  }
+
   // 加载收藏帖子
   useEffect(() => {
     if (activeTab !== 'bookmarks' || !isOwnProfile) return;
-    setLoadingBookmarks(true);
     api.get('/posts/bookmarks/me')
       .then(res => {
         setBookmarkedPosts(res.data.posts);
@@ -128,7 +135,6 @@ export default function Profile({ embeddedUserId, onBack }: ProfileProps = {}) {
   // 加载转发帖子
   useEffect(() => {
     if (activeTab !== 'reposts' || !isOwnProfile) return;
-    setLoadingReposts(true);
     api.get('/posts/reposts/me')
       .then(res => {
         setRepostedPosts(res.data.posts);

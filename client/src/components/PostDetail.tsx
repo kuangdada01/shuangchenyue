@@ -14,7 +14,7 @@
  * ============================================================
  */
 
-import { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { X, MessageCircle, Share2, Send, Trash2, ChevronLeft, Pencil, Bookmark, Repeat2 } from 'lucide-react';
@@ -64,6 +64,10 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
   const { getBookmarked } = useBookmark();
   const { openEdit } = useEvent();
   const { isPlaying: isMusicPlaying, pause: pauseMusic, play: playMusic } = useMusic();
+  // 音乐方法/状态每次渲染都会重建，用 ref 保存最新值，
+  // 避免 effect 依赖不稳定函数导致反复重建（react-hooks/exhaustive-deps）
+  const musicRef = useRef({ isMusicPlaying, pauseMusic, playMusic });
+  useEffect(() => { musicRef.current = { isMusicPlaying, pauseMusic, playMusic }; });
   const musicWasPlayingRef = useRef(false);
   const navigate = useNavigate();
   const [post, setPost] = useState<Post | null>(null);
@@ -98,6 +102,15 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
   const [loadError, setLoadError] = useState(false);
   const [activeHighlightId, setActiveHighlightId] = useState<number | null>(null);
 
+  // 帖子/用户切换时重置加载错误与高亮（渲染期 prev 值模式，替代 effect 内同步 setState）
+  const [prevDetailKey, setPrevDetailKey] = useState('');
+  const detailKey = `${postId}|${user?.id ?? 'anon'}`;
+  if (detailKey !== prevDetailKey) {
+    setPrevDetailKey(detailKey);
+    setLoadError(false);
+    setActiveHighlightId(null);
+  }
+
   // 检测是否为嵌套 PostDetail（在另一个 PostDetail 的 ProfileOverlay 内部）
   const isNestedRef = useRef(false);
   // 注册/注销嵌套 PostDetail 实例，供外层 PostDetail 的返回键处理使用
@@ -120,9 +133,8 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
   }, []);
 
   // 加载评论，全部折叠，若有高亮评论ID则展开其祖先
+  // （loadError/highlight 重置已在渲染期完成）
   useEffect(() => {
-    setLoadError(false);
-    setActiveHighlightId(null);
     api.get(`/posts/${postId}`).then(async res => {
       setPost(res.data.post);
       setComments(res.data.comments);
@@ -178,17 +190,19 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
     }).catch(() => {
       setLoadError(true);
     });
-  }, [postId, user, getFollowStatus, setFollowStatus]);
+  }, [postId, user, getFollowStatus, setFollowStatus, getBookmarked, getLikeInfo, getReposted, highlightCommentId,
+    setBookmarked, setLikeCount, setLiked, setRepostCount, setReposted]);
 
   // 帖子加载时自动播放带声音的视频，并暂停音乐
   useEffect(() => {
     if (!post?.video_url) return;
     const timer = setTimeout(() => {
       if (detailVideoRef.current) {
-        // 记录音乐是否正在播放，关闭时恢复
-        musicWasPlayingRef.current = isMusicPlaying;
-        if (isMusicPlaying) {
-          pauseMusic();
+        // 记录音乐是否正在播放，关闭时恢复（musicRef 读取最新值）
+        const { isMusicPlaying: playing, pauseMusic: pause } = musicRef.current;
+        musicWasPlayingRef.current = playing;
+        if (playing) {
+          pause();
         }
         detailVideoRef.current.muted = false;
         detailVideoRef.current.volume = 0.8;
@@ -342,11 +356,11 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
     }
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setClosing(true);
     // 恢复音乐播放
     if (musicWasPlayingRef.current) {
-      playMusic();
+      musicRef.current.playMusic();
     }
     setTimeout(() => {
       if (onClose) {
@@ -360,7 +374,7 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
         }
       }
     }, 200);
-  };
+  }, [onClose, navigate]);
 
   const handleNavigate = (path: string) => {
     // 提取 /profile/:id 中的 userId
@@ -402,7 +416,7 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
     };
     window.addEventListener('backbutton', handler);
     return () => window.removeEventListener('backbutton', handler);
-  }, [onClose]);
+  }, [onClose, handleClose]);
 
   // 锁定 body 滚动 + 阻止滚轮穿透到背景页面（仅允许评论区内部滚动）
   const wheelHandlerRef = useRef<((e: WheelEvent) => void) | null>(null);
@@ -451,7 +465,7 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [zoomed, closing]);
+  }, [zoomed, closing, handleClose]);
 
   // Android 返回键：监听 popstate 关闭 overlay
   useEffect(() => {
@@ -464,7 +478,7 @@ export default function PostDetail({ postId, onClose, onLikeChange, onCommentCha
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [closing, onClose]);
+  }, [closing, onClose, handleClose]);
 
   const toggleReplies = (commentId: number) => {
     setCollapsedReplies(prev => {

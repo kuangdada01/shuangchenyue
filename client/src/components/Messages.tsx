@@ -34,6 +34,19 @@ import ChatZoomOverlay from './chat/ChatZoomOverlay';
 import styles from './chat/Messages.module.css';
 import bubbleStyles from './chat/MessageBubble.module.css';
 
+/** 合并消息页：按 id 去重后按 id 升序（loadMessages 与 effect 内轮询共用） */
+function mergeMessagePages(prev: Message[], newMsgs: Message[]): Message[] {
+  const lastPrev = prev[prev.length - 1];
+  const lastNew = newMsgs[newMsgs.length - 1];
+  // 无新消息：最后一条 ID 相同且已加载数量 ≥ 最新页 → 跳过重渲染（防止滚动位置重置）
+  if (lastPrev && lastNew && lastPrev.id === lastNew.id && prev.length >= newMsgs.length) return prev;
+  if (prev.length === 0 && newMsgs.length === 0) return prev;
+  // 合并：保留已加载的更早消息，用最新页补齐/更新
+  const byId = new Map(prev.map(m => [m.id, m]));
+  for (const m of newMsgs) byId.set(m.id, m);
+  return [...byId.values()].sort((a, b) => a.id - b.id);
+}
+
 export default function Messages() {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -133,19 +146,21 @@ export default function Messages() {
       const res = await api.get(`/messages/${partnerId}`, { params: { limit: 50 } });
       const newMsgs = res.data.messages as Message[];
       hasMoreRef.current = !!res.data.has_more;
-      setMessages(prev => {
-        const lastPrev = prev[prev.length - 1];
-        const lastNew = newMsgs[newMsgs.length - 1];
-        // 无新消息：最后一条 ID 相同且已加载数量 ≥ 最新页 → 跳过重渲染（防止滚动位置重置）
-        if (lastPrev && lastNew && lastPrev.id === lastNew.id && prev.length >= newMsgs.length) return prev;
-        if (prev.length === 0 && newMsgs.length === 0) return prev;
-        // 合并：保留已加载的更早消息，用最新页补齐/更新
-        const byId = new Map(prev.map(m => [m.id, m]));
-        for (const m of newMsgs) byId.set(m.id, m);
-        return [...byId.values()].sort((a, b) => a.id - b.id);
-      });
+      setMessages(prev => mergeMessagePages(prev, newMsgs));
     } catch {}
   }, [userId]);
+
+  // 渲染期同步 selectedPartner（prev 值模式）：仅当 partner 变化时调整，
+  // 替代 effect 内同步 setState（react-hooks/set-state-in-effect）
+  const activePartnerId = userId ? parseInt(userId) : null;
+  const activeConv = activePartnerId !== null ? conversations.find(c => c.partner_id === activePartnerId) : undefined;
+  if (activePartnerId !== null && selectedPartner?.partner_id !== activePartnerId) {
+    setSelectedPartner(activeConv ?? {
+      partner_id: activePartnerId,
+      username: '', avatar: null,
+      last_message: '', last_message_at: '', unread_count: 0,
+    });
+  }
 
   // Load messages when partner selected + poll for new messages
   useEffect(() => {
@@ -153,17 +168,9 @@ export default function Messages() {
     const partnerId = parseInt(userId);
     initialScrollRef.current = true;
 
-    // 立即用本地数据设置 partner，确保聊天视图立刻渲染（无空白页闪烁）
+    // 骨架 partner（本体已在渲染期同步）：用户名/头像异步填充
     const conv = conversations.find(c => c.partner_id === partnerId);
-    if (conv) {
-      setSelectedPartner(conv);
-    } else {
-      // 骨架 partner：聊天视图立即可渲染，用户名/头像异步填充
-      setSelectedPartner({
-        partner_id: partnerId,
-        username: '', avatar: null,
-        last_message: '', last_message_at: '', unread_count: 0,
-      });
+    if (!conv) {
       api.get(`/users/${partnerId}`).then(res => {
         setSelectedPartner(prev => prev?.partner_id === partnerId ? {
           ...prev,
@@ -173,13 +180,24 @@ export default function Messages() {
       });
     }
 
-    loadMessages();
-    const interval = setInterval(loadMessages, 5000);
+    // 拉取 + 轮询：async 函数定义在 effect 内，await 边界可被规则正确识别
+    const pollMessages = async () => {
+      if (!userId) return;
+      const pid = parseInt(userId);
+      try {
+        const res = await api.get(`/messages/${pid}`, { params: { limit: 50 } });
+        const newMsgs = res.data.messages as Message[];
+        hasMoreRef.current = !!res.data.has_more;
+        setMessages(prev => mergeMessagePages(prev, newMsgs));
+      } catch {}
+    };
+    pollMessages();
+    const interval = setInterval(pollMessages, 5000);
 
     return () => clearInterval(interval);
     // 历史实现仅在 userId 变化时重建（conversations 通过闭包读取当时的快照）
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, loadMessages]);
+  }, [userId]);
 
   // 首次加载标记：column-reverse 天然从底部开始，无需 JS 滚动
   useEffect(() => {
@@ -259,13 +277,15 @@ export default function Messages() {
     }
   }, [messages.length]);
 
+  // 搜索词清空时立即复位结果（渲染期调整，替代 effect 内同步 setState）
+  if (!followSearch.trim()) {
+    if (searchResults.length > 0) setSearchResults([]);
+    if (showFollowResults) setShowFollowResults(false);
+  }
+
   // 搜索用户（所有用户）
   useEffect(() => {
-    if (!followSearch.trim()) {
-      setSearchResults([]);
-      setShowFollowResults(false);
-      return;
-    }
+    if (!followSearch.trim()) return;
     const timer = setTimeout(async () => {
       try {
         const res = await api.get('/friends/search', { params: { q: followSearch.trim() } });

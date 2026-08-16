@@ -24,15 +24,11 @@ export default function AnnouncementPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadAnnouncements();
+    api.get('/announcements')
+      .then(res => setAnnouncements(res.data.announcements))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
-
-  const loadAnnouncements = async () => {
-    try {
-      const res = await api.get('/announcements');
-      setAnnouncements(res.data.announcements);
-    } catch {} finally { setLoading(false); }
-  };
 
   const markRead = async (id: number) => {
     try {

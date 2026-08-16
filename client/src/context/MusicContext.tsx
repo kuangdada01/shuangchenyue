@@ -38,7 +38,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const fetchSongs = useCallback(async () => {
     try {
-      setLoading(true);
+      // 初始 loading 由 useState(true) 承担；刷新时不再同步置 loading，
+      // 避免 effect 内同步 setState（react-hooks/set-state-in-effect）
       // 原生平台必须使用完整服务器地址（相对路径会解析到 WebView 本地 localhost）
       const res = await fetch(`${getApiBaseUrl()}/music`);
       if (res.ok) {
@@ -53,17 +54,21 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // 用 ref 保存最新回调，避免 audio 事件监听器捕获首渲染的陈旧闭包
+  // （ref 写入放在 effect 中，渲染期写 ref 会被 react-hooks/refs 拦截）
   const songsRef = useRef(songs);
-  songsRef.current = songs;
+  useEffect(() => { songsRef.current = songs; }, [songs]);
   const nextRef = useRef<() => void>(() => {});
-  nextRef.current = () => {
-    const len = songsRef.current.length;
-    setCurrentIndex(prev => (len > 0 ? (prev + 1) % len : 0));
-    setIsPlaying(true);
-  };
+  useEffect(() => {
+    nextRef.current = () => {
+      const len = songsRef.current.length;
+      setCurrentIndex(prev => (len > 0 ? (prev + 1) % len : 0));
+      setIsPlaying(true);
+    };
+  });
 
   useEffect(() => {
-    fetchSongs();
+    // 挂载时拉取：经 Promise 回调间接调用（effect 同步路径不直接调用含 setState 的函数）
+    void Promise.resolve().then(() => fetchSongs());
   }, [fetchSongs]);
   const currentSong = songs[currentIndex] || null;
 

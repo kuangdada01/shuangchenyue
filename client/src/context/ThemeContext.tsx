@@ -112,20 +112,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyStatusBar(newMode);
   }, []);
 
-  // 初始化：首次挂载时应用状态栏主题
+  // 初始化：resolved 与 data-theme 已由 useState 初始化器同步（避免首帧闪烁），
+  // 此处仅延迟应用状态栏主题，确保 Capacitor Bridge 已初始化
   useEffect(() => {
-    const theme = resolveTheme(mode);
-    setResolved(theme);
-    updateDataTheme(theme);
-    updateThemeColor(theme);
-
-    // 延迟调用，确保 Capacitor Bridge 已初始化
     const timer = setTimeout(() => {
       applyStatusBar(mode);
     }, 600);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [mode]);
 
   // 监听系统主题变化（仅 system 模式下响应）
   useEffect(() => {

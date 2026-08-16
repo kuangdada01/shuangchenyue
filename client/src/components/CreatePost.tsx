@@ -17,7 +17,7 @@
  * ============================================================
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { ImagePlus, Video, X, ChevronDown, ChevronUp } from 'lucide-react';
 import EmojiPicker from './EmojiPicker';
 import ConfirmDialog from './ui/ConfirmDialog';
@@ -26,7 +26,7 @@ import { useEvent } from '../context/CreateContext';
 import { events } from '../state/events';
 import { showToast } from './ui/Toast';
 import { useImageGridDrag } from '../hooks/useImageGridDrag';
-import api from '../api';
+import { createImagePost, createVideoPost } from '../api/posts';
 import { resolveMediaUrl } from '../utils';
 import styles from './CreatePost.module.css';
 import composer from './post/PostComposer.module.css';
@@ -185,24 +185,24 @@ export default function CreatePost() {
     extractFrame(0);
   };
 
-  const handleClose = () => {
+  const hasContent = imageFiles.length > 0 || videoFile !== null;
+
+  const handleClose = useCallback(() => {
     setClosing(true);
     setTimeout(() => {
       closeCreate();
     }, 200);
-  };
+  }, [closeCreate]);
 
-  const handleDiscard = () => {
+  const handleDiscard = useCallback(() => {
     if (hasContent) { setShowDiscardConfirm(true); }
     else handleClose();
-  };
+  }, [hasContent, handleClose]);
 
   const confirmDiscard = () => {
     setImageFiles([]); setImagePreviews([]); handleRemoveVideo(); setDescription(''); setCurrentImageIndex(0); setStep(1);
     setShowDiscardConfirm(false); handleClose();
   };
-
-  const hasContent = imageFiles.length > 0 || videoFile !== null;
 
   // 打开时推入历史记录，让返回键可以触发放弃操作
   useEffect(() => {
@@ -222,7 +222,7 @@ export default function CreatePost() {
     };
     window.addEventListener('popstate', handlePopState, true); // capture phase
     return () => window.removeEventListener('popstate', handlePopState, true);
-  }, [showDiscardConfirm, hasContent]);
+  }, [showDiscardConfirm, hasContent, handleDiscard]);
 
   // ESC 键关闭（有内容时弹出放弃确认）
   useEffect(() => {
@@ -237,7 +237,7 @@ export default function CreatePost() {
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [showDiscardConfirm, hasContent]);
+  }, [showDiscardConfirm, hasContent, handleDiscard]);
 
   const handleContinue = () => {
     if (videoFile) setStep(2); // 视频跳转封面编辑
@@ -259,14 +259,16 @@ export default function CreatePost() {
         formData.append('description', description);
         if (closeComments) formData.append('close_comments', '1');
         if (pinned) formData.append('pinned', '1');
-        await api.post('/posts/video', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        // createVideoPost 使用 timeout: 0（视频上传+服务端转码可能超过全局15s超时，
+        // 超时会导致"发布失败"误报，但服务端实际已发布成功）
+        await createVideoPost(formData);
       } else {
         const formData = new FormData();
         imageFiles.forEach(file => formData.append('images', file));
         formData.append('description', description);
         if (closeComments) formData.append('close_comments', '1');
         if (pinned) formData.append('pinned', '1');
-        await api.post('/posts', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        await createImagePost(formData);
       }
       showToast('分享成功！');
       events.emit('post:created'); // 通知首页刷新

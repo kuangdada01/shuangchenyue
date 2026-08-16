@@ -27,6 +27,15 @@ export default function BookReaderPage() {
   const [loading, setLoading] = useState(true);
   const [fontSize, setFontSize] = useState(17);
 
+  // 加载态调整（渲染期 prev 值模式，替代 effect 内同步 setState）：
+  // file 为空 → 结束加载态；file/id 变化 → 进入加载态
+  const [prevLoadKey, setPrevLoadKey] = useState('');
+  if (!file && loading) setLoading(false);
+  if (file && `${id}|${file}` !== prevLoadKey) {
+    setPrevLoadKey(`${id}|${file}`);
+    setLoading(true);
+  }
+
   // 扁平化章节列表，用于上/下一章导航
   const flatChapters = useMemo(() => {
     if (!book) return [];
@@ -39,8 +48,7 @@ export default function BookReaderPage() {
   );
 
   useEffect(() => {
-    if (!file) { setLoading(false); return; }
-    setLoading(true);
+    if (!file) return;
     api.get(`/books/${id}/content`, { params: { file }, responseType: 'text' })
       .then(res => setContent(res.data as string))
       .catch(() => setContent(''))

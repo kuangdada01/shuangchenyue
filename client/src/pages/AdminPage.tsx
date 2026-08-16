@@ -12,7 +12,7 @@
  * ============================================================
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { postsFeedKey } from '../hooks/usePostsFeed';
@@ -90,32 +90,25 @@ export default function AdminPage() {
   }, [user, navigate]);
 
   useEffect(() => {
-    if (tab === 'users') loadUsers();
-    if (tab === 'posts') loadPosts();
-    if (tab === 'announcements') loadAnnouncements();
-  }, [tab]);
+    // 数据加载内联在 effect 中（.then 回调内的 setState 属于异步回调，
+    // 不触发 react-hooks/set-state-in-effect）
+    if (tab === 'users') {
+      api.get('/admin/users').then(res => setUsers(res.data.users)).catch(() => {});
+    } else if (tab === 'posts') {
+      api.get(`/admin/posts?page=${postPage}&limit=20`)
+        .then(res => { setPosts(res.data.posts); setPostTotal(res.data.totalPages); })
+        .catch(() => {});
+    } else if (tab === 'announcements') {
+      api.get('/admin/announcements').then(res => setAnnouncements(res.data.announcements)).catch(() => {});
+    }
+  }, [tab, postPage]);
 
-  const loadUsers = async () => {
-    try {
-      const res = await api.get('/admin/users');
-      setUsers(res.data.users);
-    } catch {}
-  };
-
-  const loadPosts = async () => {
-    try {
-      const res = await api.get(`/admin/posts?page=${postPage}&limit=20`);
-      setPosts(res.data.posts);
-      setPostTotal(res.data.totalPages);
-    } catch {}
-  };
-
-  const loadAnnouncements = async () => {
+  const loadAnnouncements = useCallback(async () => {
     try {
       const res = await api.get('/admin/announcements');
       setAnnouncements(res.data.announcements);
     } catch {}
-  };
+  }, []);
 
   const handleDeleteUser = (u: AdminUser) => {
     setConfirmMsg(`确定要删除用户 "${u.username}" 吗？该用户的帖子、评论等数据将一并删除。`);
@@ -335,11 +328,11 @@ export default function AdminPage() {
             </div>
             {postTotal > 1 && (
               <div className={styles.pagination}>
-                <button disabled={postPage <= 1} onClick={() => { setPostPage(p => p - 1); loadPosts(); }}>
+                <button disabled={postPage <= 1} onClick={() => setPostPage(p => p - 1)}>
                   <ChevronLeft size={16} />
                 </button>
                 <span>{postPage} / {postTotal}</span>
-                <button disabled={postPage >= postTotal} onClick={() => { setPostPage(p => p + 1); loadPosts(); }}>
+                <button disabled={postPage >= postTotal} onClick={() => setPostPage(p => p + 1)}>
                   <ChevronRight size={16} />
                 </button>
               </div>

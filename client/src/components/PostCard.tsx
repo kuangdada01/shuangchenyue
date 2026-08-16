@@ -88,22 +88,22 @@ export default function PostCard({ post, onLikeToggle, onPostClick, onProfileCli
     return () => observer.disconnect();
   }, []);
 
-  // 帖子不可见时重置到封面
+  // 帖子不可见时重置到封面（渲染期调整 + 独立滚动 effect，替代 effect 内同步 setState）
+  if (!isFullyVisible && images.length > 1 && currentImageIndex !== 0) {
+    setCurrentImageIndex(0);
+  }
   useEffect(() => {
-    if (!isFullyVisible && images.length > 1) {
-      setCurrentImageIndex(0);
-      if (scrollRef.current) {
-        scrollRef.current.scrollTo({ left: 0, behavior: 'instant' });
-      }
+    if (currentImageIndex === 0 && scrollRef.current) {
+      scrollRef.current.scrollTo({ left: 0, behavior: 'instant' });
     }
-  }, [isFullyVisible, images.length]);
+  }, [currentImageIndex]);
 
   // 视频：帖子完全可见时加载，数据就绪后播放（避免播放图标闪烁）
+  // 不可见时的 videoReady 复位改为渲染期调整，避免 effect 内同步 setState
+  const videoShouldBeReady = !!(post.video_url && isFullyVisible);
+  if (!videoShouldBeReady && videoReady) setVideoReady(false);
   useEffect(() => {
-    if (!post.video_url || !isFullyVisible) {
-      setVideoReady(false);
-      return;
-    }
+    if (!post.video_url || !isFullyVisible) return;
     const video = videoRef.current;
     if (!video) return;
 
@@ -124,18 +124,18 @@ export default function PostCard({ post, onLikeToggle, onPostClick, onProfileCli
     };
   }, [post.video_url, isFullyVisible]);
 
+  // 关注状态：缓存命中时渲染期同步，未命中才发请求
+  if (user && post.user_id !== user.id) {
+    const cached = getFollowStatus(post.user_id);
+    if (cached !== undefined && isFollowing !== cached) setIsFollowing(cached);
+  }
   useEffect(() => {
-    if (user && post.user_id !== user.id) {
-      const cached = getFollowStatus(post.user_id);
-      if (cached !== undefined) {
-        setIsFollowing(cached);
-      } else {
-        api.get(`/friends/status/${post.user_id}`).then(res => {
-          setIsFollowing(res.data.is_following);
-          setFollowStatus(post.user_id, res.data.is_following);
-        }).catch(() => {});
-      }
-    }
+    if (!user || post.user_id === user.id) return;
+    if (getFollowStatus(post.user_id) !== undefined) return; // 渲染期已同步
+    api.get(`/friends/status/${post.user_id}`).then(res => {
+      setIsFollowing(res.data.is_following);
+      setFollowStatus(post.user_id, res.data.is_following);
+    }).catch(() => {});
   }, [post.user_id, user, getFollowStatus, setFollowStatus]);
 
   useEffect(() => {

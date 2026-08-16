@@ -15,7 +15,7 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
 /** 编辑帖子时传入的数据结构 */
-interface EditPostData {
+export interface EditPostData {
   id: number;                // 帖子ID
   description: string;       // 帖子描述
   images: string[];          // 当前图片列表

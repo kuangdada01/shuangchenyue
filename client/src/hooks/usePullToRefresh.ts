@@ -40,9 +40,9 @@ export function usePullToRefresh(options: PullToRefreshOptions): void {
   const pullDistRef = useRef(0);
   const refreshingRef = useRef(false);
   const onRefreshRef = useRef(onRefresh);
-  onRefreshRef.current = onRefresh;
 
-  // Keep refs in sync
+  // Keep refs in sync（渲染期写 ref 会被 react-hooks/refs 拦截，改在 effect 中同步）
+  useEffect(() => { onRefreshRef.current = onRefresh; }, [onRefresh]);
   useEffect(() => { refreshingRef.current = refreshing; }, [refreshing]);
 
   useEffect(() => {

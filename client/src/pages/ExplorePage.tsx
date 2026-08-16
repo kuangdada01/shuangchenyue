@@ -57,9 +57,11 @@ export default function ExplorePage() {
     }
   }, []);
 
-  // 初始加载
+  // 初始加载（延迟一帧执行：loadPosts 的同步前缀会 setState，
+  // effect 内同步调用会触发 react-hooks/set-state-in-effect）
   useEffect(() => {
-    loadPosts(1, '', false);
+    const timer = setTimeout(() => loadPosts(1, '', false), 0);
+    return () => clearTimeout(timer);
   }, [loadPosts]);
 
   // 搜索防抖

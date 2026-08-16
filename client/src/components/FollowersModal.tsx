@@ -12,7 +12,7 @@
  * ============================================================
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Search } from 'lucide-react';
 import api from '../api';
@@ -56,6 +56,12 @@ export default function FollowersModal({ type, userId, onClose }: FollowersModal
     }).finally(() => setLoading(false));
   }, [type, userId]);
 
+  // 关闭处理（定义在 effect 之前：effect 会引用它，且 useCallback 保证依赖稳定）
+  const handleClose = useCallback(() => {
+    setClosing(true);
+    setTimeout(() => onClose(), 200);
+  }, [onClose]);
+
   // ESC 键关闭
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -63,12 +69,7 @@ export default function FollowersModal({ type, userId, onClose }: FollowersModal
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const handleClose = () => {
-    setClosing(true);
-    setTimeout(() => onClose(), 200);
-  };
+  }, [handleClose]);
 
   const handleFollow = async (targetId: number) => {
     try {
