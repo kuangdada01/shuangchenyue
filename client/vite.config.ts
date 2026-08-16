@@ -34,6 +34,12 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    watch: {
+      // 忽略编辑器原子保存产生的临时目录/文件（.*.tmpdir/、*.tmp）：
+      // Windows 上 fs.watch 监听这些瞬态路径会报 EBUSY，导致 Vite 直接崩溃退出
+      ignored: (path: string) =>
+        path.includes('.tmpdir') || path.endsWith('.tmp') || path.endsWith('.tmpdir'),
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3000',

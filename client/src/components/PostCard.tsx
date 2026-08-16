@@ -55,11 +55,13 @@ export default function PostCard({ post, onLikeToggle, onPostClick, onProfileCli
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isFullyVisible, setIsFullyVisible] = useState(false);
+  const [isPartiallyVisible, setIsPartiallyVisible] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const heartRef = useRef<SVGSVGElement>(null);
+  const scrollDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
 
   const images = (() => {
@@ -72,31 +74,50 @@ export default function PostCard({ post, onLikeToggle, onPostClick, onProfileCli
     return [post.image_url];
   })();
 
-  // Intersection Observer: 检测帖子是否完全可见
+  // Intersection Observer: 检测帖子可见程度
+  // - ≥95% 完全可见：视频自动播放
+  // - ≥50% 部分可见：图片轮播自动播放（大卡片/小视口下 95% 不可达，需放宽）
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        setIsPartiallyVisible(entry.isIntersecting && entry.intersectionRatio >= 0.5);
         setIsFullyVisible(entry.isIntersecting && entry.intersectionRatio >= 0.95);
       },
-      { threshold: [0.95] }
+      { threshold: [0.5, 0.95] }
     );
 
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
-  // 帖子不可见时重置到封面（渲染期调整 + 独立滚动 effect，替代 effect 内同步 setState）
-  if (!isFullyVisible && images.length > 1 && currentImageIndex !== 0) {
+  // 帖子几乎不可见时重置到封面（渲染期调整，prev 值由 currentImageIndex 守卫）
+  if (!isPartiallyVisible && images.length > 1 && currentImageIndex !== 0) {
     setCurrentImageIndex(0);
   }
+
+  // Auto-play carousel: 部分可见且未悬停暂停时每 3 秒推进一张
   useEffect(() => {
-    if (currentImageIndex === 0 && scrollRef.current) {
-      scrollRef.current.scrollTo({ left: 0, behavior: 'instant' });
+    if (images.length <= 1 || isPaused || !isPartiallyVisible) return;
+    const timer = setInterval(() => {
+      setCurrentImageIndex(prev => (prev + 1) % images.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [images.length, isPaused, isPartiallyVisible]);
+
+  // index 变化 → 平滑滚动到对应图片（滚动副作用从 state updater 移出；
+  // 防抖回写与平滑动画的竞争是轮播不动的历史根因）
+  useEffect(() => {
+    if (images.length <= 1 || isPaused) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const target = el.clientWidth * currentImageIndex;
+    if (Math.abs(el.scrollLeft - target) > 4) {
+      el.scrollTo({ left: target, behavior: 'smooth' });
     }
-  }, [currentImageIndex]);
+  }, [currentImageIndex, images.length, isPaused]);
 
   // 视频：帖子完全可见时加载，数据就绪后播放（避免播放图标闪烁）
   // 不可见时的 videoReady 复位改为渲染期调整，避免 effect 内同步 setState
@@ -177,21 +198,16 @@ export default function PostCard({ post, onLikeToggle, onPostClick, onProfileCli
     void svg.getBoundingClientRect();
   }, [liked]);
 
-  // Auto-play carousel: 仅帖子完全可见且未悬停暂停时播放
-  useEffect(() => {
-    if (images.length <= 1 || isPaused || !isFullyVisible) return;
-    const timer = setInterval(() => {
-      setCurrentImageIndex(prev => {
-        const next = (prev + 1) % images.length;
-        if (scrollRef.current) {
-          const width = scrollRef.current.clientWidth;
-          scrollRef.current.scrollTo({ left: width * next, behavior: 'smooth' });
-        }
-        return next;
-      });
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [images.length, isPaused, isFullyVisible]);
+  // 用户滚动 → 400ms 防抖回写 index（覆盖手动滑动；时长大于平滑动画，
+  // 自动播放产生的 onScroll 不会把索引拉回，避免与自动滚动打架）
+  const handleScroll = () => {
+    if (scrollDebounceRef.current) clearTimeout(scrollDebounceRef.current);
+    scrollDebounceRef.current = setTimeout(() => {
+      const el = scrollRef.current;
+      if (!el) return;
+      setCurrentImageIndex(Math.round(el.scrollLeft / el.clientWidth));
+    }, 400);
+  };
 
   const handleFollow = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -228,13 +244,6 @@ export default function PostCard({ post, onLikeToggle, onPostClick, onProfileCli
     }
     setShowTooltip(true);
     setTimeout(() => setShowTooltip(false), 1500);
-  };
-
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const scrollLeft = scrollRef.current.scrollLeft;
-    const width = scrollRef.current.clientWidth;
-    setCurrentImageIndex(Math.round(scrollLeft / width));
   };
 
   return (
